@@ -52,30 +52,6 @@ def use_backend(backend_instance):
     BACKEND = backend_instance
 
 
-
-class DefaultRemoteObjectFetcher(object):
-    """Not meant to be used on production, a caching layer, and DB shortcut fox inbox/outbox should be hooked."""
-
-    def __init__(self):
-        self._user_agent = 'Little Boxes (+https://github.com/tsileo/little_boxes)'
-
-    def fetch(self, iri):
-        print('OLD FETCHER')
-        check_url(iri)
-
-        resp = requests.get(iri, headers={
-            'Accept': 'application/activity+json',
-            'User-Agent': self._user_agent,
-        })
-
-        if resp.status_code == 404:
-            raise ActivityNotFoundError(f'{iri} cannot be fetched, 404 not found error')
-
-        resp.raise_for_status()
-
-        return resp.json()
-
-
 class ActivityType(Enum):
     """Supported activity `type`."""
     ANNOUNCE = 'Announce'
@@ -112,11 +88,6 @@ def parse_activity(payload: ObjectType, expected: Optional[ActivityType] = None)
     return activity
 
 
-def random_object_id() -> str:
-    """Generates a random object ID."""
-    return binascii.hexlify(os.urandom(8)).decode('utf-8')
-
-
 def _to_list(data: Union[List[Any], Any]) -> List[Any]:
     """Helper to convert fields that can be either an object or a list of objects to a list of object."""
     if isinstance(data, list):
@@ -151,6 +122,7 @@ def track_call(f):
     return wrapper
 
 
+# FIXME(tsileo): move this to little_boxes.tests.InMemBackend and make this one an abstract classes
 class BaseBackend(object):
     """In-memory backend meant to be used for the test suite."""
     DB = {}
@@ -168,6 +140,26 @@ class BaseBackend(object):
         data = list(self._METHOD_CALLS)
         self._METHOD_CALLS = []
         return data
+
+    def assert_called_methods(self, *asserts) -> List[str]:
+        calls = self.called_methods()
+        for i, assert_data in enumerate(asserts):
+            if len(calls) < i+1:
+                raise ValueError(f'no methods called at step #{i}')
+            name, *funcs = assert_data
+            if name != calls[i][0]:
+                raise ValueError(f'expected method {name} to be called at step #{i}, but got {calls[i][0]}')
+            for z, f in enumerate(funcs):
+                if len(calls[i][1]) < z+2:  # XXX(tsileo): 0 will be self
+                    raise ValueError(f'method {name} has no args at index {Z}')
+                f(calls[i][1][z+1])
+
+        return calls
+
+    def random_object_id(self) -> str:
+        """Generates a random object ID."""
+        return binascii.hexlify(os.urandom(8)).decode('utf-8')
+
 
     def setup_actor(self, name, pusername):
         """Create a new actor in this backend."""
@@ -236,20 +228,21 @@ class BaseBackend(object):
         self.OUTBOX_IDX[actor_id][activity.id] = activity
 
     @track_call
-    def new_follower(self, as_actor: 'Person', actor: 'Person') -> None:
-        self.FOLLOWERS[as_actor.id].append(actor.id)
-
-    def undo_new_follower(self, actor: 'Person') -> None:
-        pass
+    def new_follower(self, as_actor: 'Person', follow: 'Follow') -> None:
+        self.FOLLOWERS[follow.get_object().id].append(follow.get_actor().id)
 
     @track_call
-    def new_following(self, as_actor: 'Person', actor: 'Person') -> None:
-        print(f'new following {actor!r}')
-        self.FOLLOWING[as_actor.id].append(actor.id)
+    def undo_new_follower(self, as_actor: 'Person', follow: 'Follow') -> None:
+        self.FOLLOWERS[follow.get_object().id].remove(follow.get_actor().id)
 
     @track_call
-    def undo_new_following(self, actor: 'Person') -> None:
-        pass
+    def new_following(self, as_actor: 'Person', follow: 'Follow') -> None:
+        print(f'new following {follow!r}')
+        self.FOLLOWING[as_actor.id].append(follow.get_object().id)
+
+    @track_call
+    def undo_new_following(self, as_actor: 'Person', follow: 'Follow') -> None:
+        self.FOLLOWING[as_actor.id].remove(follow.get_object().id)
 
     def followers(self, as_actor: 'Person') -> List[str]:
         return self.FOLLOWERS[as_actor.id]
@@ -265,8 +258,9 @@ class BaseBackend(object):
         as_actor = parse_activity(self.fetch_iri(recp.replace('/inbox', '')))
         act.process_from_inbox(as_actor)
 
-    def is_from_outbox(self, activity: 'BaseActivity') -> None:
-        pass
+    def is_from_outbox(self, activity: 'BaseActivity') -> bool:
+        # return as_actor.id == activity.get_actor().id
+        return True  # FIXME(tsileo): implement this
 
     def inbox_like(self, activity: 'Like') -> None:
         pass
@@ -572,7 +566,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         logger.debug(f'calling main post to outbox hook for {self}')
 
         # Assign create a random ID
-        obj_id = random_object_id()
+        obj_id = BACKEND.random_object_id()
         self.outbox_set_id(BACKEND.activity_url(obj_id), obj_id)
 
         try:
@@ -719,26 +713,26 @@ class Follow(BaseActivity):
 
         remote_actor = self.get_actor()
 
-        # ABC
-        BACKEND.new_follower(as_actor, remote_actor)
+        BACKEND.new_follower(self.get_object(), self)
 
     def _post_to_outbox(self, obj_id: str, activity: ObjectType, recipients: List[str]) -> None:
         # XXX The new_following event will be triggered by Accept
         pass
 
     def _undo_inbox(self) -> None:
-        # ABC
-        self.undo_new_follower(self.get_actor())
+        BACKEND.undo_new_follower(self.get_object(), self)
 
     def _undo_outbox(self) -> None:
-        # ABC
-        self.undo_new_following(self.get_actor())
+        BACKEND.undo_new_following(self.get_actor(), self)
 
     def build_accept(self) -> BaseActivity:
         return self._build_reply(ActivityType.ACCEPT)
 
     def build_undo(self) -> BaseActivity:
-        return Undo(object=self.to_dict(embed=True))
+        return Undo(
+            object=self.to_dict(embed=True),
+            actor=self.get_actor().id,    
+        )
 
 
 class Accept(BaseActivity):
@@ -755,7 +749,7 @@ class Accept(BaseActivity):
         pass
 
     def _process_from_inbox(self, as_actor: 'Person') -> None:
-        BACKEND.new_following(as_actor, self.get_actor())
+        BACKEND.new_following(as_actor, self.get_object())
 
 
 class Undo(BaseActivity):
@@ -766,7 +760,7 @@ class Undo(BaseActivity):
 
     def _recipients(self) -> List[str]:
         obj = self.get_object()
-        if obj.type_enum == ActivityType.FOLLOW:
+        if obj.ACTIVITY_TYPE == ActivityType.FOLLOW:
             return [obj.get_object().id]
         else:
             return [obj.get_object().get_actor().id]
@@ -793,7 +787,7 @@ class Undo(BaseActivity):
     def _pre_post_to_outbox(self) -> None:
         """Ensures an Undo activity references an activity owned by the instance."""
         # ABC
-        if not self.is_from_outbox(self):
+        if not BACKEND.is_from_outbox(self):
             raise NotFromOutboxError(f'object {self!r} is not owned by this instance')
 
     def _post_to_outbox(self, obj_id: str, activity: ObjectType, recipients: List[str]) -> None:
@@ -895,7 +889,7 @@ class Delete(BaseActivity):
     def _get_actual_object(self) -> BaseActivity:
         # FIXME(tsileo): overrides get_object instead?
         obj = self.get_object()
-        if obj.type_enum == ActivityType.TOMBSTONE:
+        if obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
             obj = parse_activity(BACKEND.fetch_iri(obj.id))
         return obj
 
@@ -919,7 +913,7 @@ class Delete(BaseActivity):
         """Ensures the Delete activity references a activity from the outbox (i.e. owned by the instance)."""
         obj = self._get_actual_object()
         # ABC
-        if not self.is_from_outbox(self):
+        if not BACKEND.is_from_outbox(self):
             raise NotFromOutboxError(f'object {obj["id"]} is not owned by this instance')
 
     def _post_to_outbox(self, obj_id: str, activity: ObjectType, recipients: List[str]) -> None:

@@ -41,3 +41,7 @@ outbox = ap.Outbox(me)
 follow = ap.Follow(actor=me, object='http://iri-i-want-follow')
 outbox.post(follow)
 ```
+
+## Projects using Little Boxes
+
+ - [microblog.pub](http://github.com/tsileo/microblog.pub) (using MongoDB as a backend)
