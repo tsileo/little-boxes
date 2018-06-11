@@ -1,6 +1,10 @@
 # Little Boxes
 
-Tiny ActivityPub framework written in Python, both database and server agnostic.
+
+<a href="https://travis-ci.org/tsileo/little-boxes"><img src="https://travis-ci.org/tsileo/little-boxes.svg?branch=master" alt="Build Status"></a>
+<a href="https://github.com/tsileo/little-boxes/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-ISC-blue.svg?style=flat" alt="License"></a>
+
+Tiny [ActivityPub](https://activitypub.rocks/) framework written in Python, both database and server agnostic.
 
 ## Getting Started
 
