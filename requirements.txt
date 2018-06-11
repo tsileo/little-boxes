@@ -1,0 +1,7 @@
+requests
+markdown
+pyld
+pycryptodome
+html2text
+mf2py
+git+https://github.com/erikriver/opengraph.git
