@@ -22,6 +22,7 @@ def test_little_boxes_follow():
 
     outbox.post(f)
 
+    # FIXME(tsileo): two assert, one for `me` and one for `other`
     back.assert_called_methods(
             (
                 'outbox_new',

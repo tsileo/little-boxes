@@ -114,6 +114,7 @@ def _get_actor_id(actor: ObjectOrIDType) -> str:
     return actor
 
 
+# FIXME(tsileo): keeps differents list of each `as_actor`, and uses `as_actor` as first arg for everything.
 def track_call(f):
     fname = f.__name__
     def wrapper(*args, **kwargs):
