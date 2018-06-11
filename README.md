@@ -6,6 +6,8 @@
 
 Tiny [ActivityPub](https://activitypub.rocks/) framework written in Python, both database and server agnostic.
 
+**Still in early development, and not published on PyPI yet.**
+
 ## Getting Started
 
 ```python
