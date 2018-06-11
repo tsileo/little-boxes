@@ -23,9 +23,20 @@ def test_little_boxes_follow():
     outbox.post(f)
 
     back.assert_called_methods(
-            ('outbox_new', lambda x: _assert_eq(x.id, f.id)),
-            ('post_to_remote_inbox', lambda x: None, lambda x: other.id+'/inbox'),
-            ('outbox_is_blocked', lambda x: other.id, lambda x: me.id),
+            (
+                'outbox_new',
+                lambda activity: _assert_eq(activity.id, f.id)
+            ),
+            (
+                'post_to_remote_inbox',
+                lambda payload: None,
+                lambda recipient: _assert_eq(recipient, other.id+'/inbox'),
+            ),
+            (
+                'outbox_is_blocked',
+                lambda as_actor: _assert_eq(as_actor.id, other.id),
+                lambda remote_actor: _assert_eq(remote_actor, me.id),
+            ),
             # FIXME(tsileo): finish this
             # ('new_following', lambda x: _assert_eq(x, me.id), lambda x: _assert_eq(x.id, f.id)),
     )
