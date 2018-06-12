@@ -123,7 +123,7 @@ def test_little_boxes_follow_unfollow():
             lambda activity: _assert_eq(activity.id, undo.id),
         ),
         (
-            "\"undo_new_following\" hook is called",
+            '"undo_new_following" hook is called',
             "undo_new_following",
             lambda as_actor: _assert_eq(as_actor.id, me.id),
             lambda follow: _assert_eq(follow.id, f.id),
@@ -152,7 +152,7 @@ def test_little_boxes_follow_unfollow():
             lambda activity: _assert_eq(activity.id, undo.id),
         ),
         (
-            "\"undo_new_follower\" hook is called",
+            '"undo_new_follower" hook is called',
             "undo_new_follower",
             lambda as_actor: _assert_eq(as_actor.id, other.id),
             lambda follow: _assert_eq(follow.id, f.id),

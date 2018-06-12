@@ -92,7 +92,8 @@ def parse_activity(
 
 
 def _to_list(data: Union[List[Any], Any]) -> List[Any]:
-    """Helper to convert fields that can be either an object or a list of objects to a list of object."""
+    """Helper to convert fields that can be either an object or a list of objects to a
+    list of object."""
     if isinstance(data, list):
         return data
     return [data]
@@ -117,7 +118,8 @@ def _get_actor_id(actor: ObjectOrIDType) -> str:
     return actor
 
 
-# FIXME(tsileo): keeps differents list of each `as_actor`, and uses `as_actor` as first arg for everything.
+# FIXME(tsileo): keeps differents list of each `as_actor`, and uses `as_actor` as first
+# arg for everything.
 def track_call(f):
     fname = f.__name__
 
@@ -128,7 +130,8 @@ def track_call(f):
     return wrapper
 
 
-# FIXME(tsileo): move this to little_boxes.tests.InMemBackend and make this one an abstract classes
+# FIXME(tsileo): move this to little_boxes.tests.InMemBackend and make this one an
+# abstract classes
 class BaseBackend(object):
     """In-memory backend meant to be used for the test suite."""
 
@@ -162,7 +165,7 @@ class BaseBackend(object):
                 raise ValueError(f"args left unchecked for method {name} at step #{i}")
             for z, f in enumerate(funcs):
                 if len(calls[i][1]) < z + 2:  # XXX(tsileo): 0 will be self
-                    raise ValueError(f"method {name} has no args at index {Z}")
+                    raise ValueError(f"method {name} has no args at index {z}")
                 try:
                     f(calls[i][1][z + 1])
                 except AssertionError as ae:
@@ -171,7 +174,8 @@ class BaseBackend(object):
 
         if len(asserts) < len(calls):
             raise ValueError(
-                f"expecting {len(calls)} assertion, only got {len(asserts)}, leftover: {calls[len(asserts):]!r}"
+                f"expecting {len(calls)} assertion, only got {len(asserts)},"
+                f"leftover: {calls[len(asserts):]!r}"
             )
 
         return calls
@@ -235,7 +239,7 @@ class BaseBackend(object):
 
     def activity_url(self, obj_id: str) -> str:
         # from the random hex ID
-        return f'todo/{obj_id}'
+        return f"todo/{obj_id}"
 
     @track_call
     def outbox_new(self, as_actor: "Person", activity: "BaseActivity") -> None:
@@ -292,7 +296,7 @@ class BaseBackend(object):
     def outbox_like(self, activity: "Like") -> None:
         pass
 
-    def outbox_undo_like(self, activity: "Lke") -> None:
+    def outbox_undo_like(self, activity: "Like") -> None:
         pass
 
     def inbox_announce(self, activity: "Announce") -> None:
@@ -751,8 +755,6 @@ class Follow(BaseActivity):
         """Receiving a Follow should trigger an Accept."""
         accept = self.build_accept()
         accept.post_to_outbox()
-
-        remote_actor = self.get_actor()
 
         BACKEND.new_follower(self.get_object(), self)
 
