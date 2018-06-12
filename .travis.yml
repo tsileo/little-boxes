@@ -9,3 +9,4 @@ script:
 # - flake8 .
  - black --check
  - python -m pytest -vv -cov=little_boxes
+ - codecov
