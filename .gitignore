@@ -1,6 +1,8 @@
 *.sw[op]
 key_*.pem
 
+.coverage
+coverage.xml
 *.egg-info
 .pytest_cache
 .mypy_cache/

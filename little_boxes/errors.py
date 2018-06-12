@@ -6,10 +6,12 @@ from typing import Any
 
 class Error(Exception):
     """HTTP-friendly base error, with a status code, a message and an optional payload."""
+
     status_code = 400
 
     def __init__(
-        self, message: str,
+        self,
+        message: str,
         status_code: Optional[int] = None,
         payload: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -21,13 +23,11 @@ class Error(Exception):
 
     def to_dict(self) -> Dict[str, Any]:
         rv = dict(self.payload or ())
-        rv['message'] = self.message
+        rv["message"] = self.message
         return rv
 
     def __repr__(self) -> str:
-        return (
-            f'{self.__class__.__qualname__}({self.message!r}, payload={self.payload!r}, status_code={self.status_code})'
-        )
+        return f"{self.__class__.__qualname__}({self.message!r}, payload={self.payload!r}, status_code={self.status_code})"
 
 
 class ActorBlockedError(Error):
@@ -40,6 +40,7 @@ class NotFromOutboxError(Error):
 
 class ActivityNotFoundError(Error):
     """Raised when an activity is not found."""
+
     status_code = 404
 
 

@@ -45,3 +45,9 @@ outbox.post(follow)
 ## Projects using Little Boxes
 
  - [microblog.pub](http://github.com/tsileo/microblog.pub) (using MongoDB as a backend)
+
+## Contributions
+
+TODO: document Mypy, flake8 and black.
+
+PRs are welcome, please open an issue to start a discussion before your start any work.

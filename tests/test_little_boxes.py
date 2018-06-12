@@ -2,6 +2,7 @@ from unittest import mock
 
 from little_boxes import activitypub as ap
 
+
 def _assert_eq(val, other):
     assert val == other
 
@@ -10,88 +11,84 @@ def test_little_boxes_follow():
     back = ap.BaseBackend()
     ap.use_backend(back)
 
-    me = back.setup_actor('Thomas', 'tom')
+    me = back.setup_actor("Thomas", "tom")
 
-    other = back.setup_actor('Thomas', 'tom2')
+    other = back.setup_actor("Thomas", "tom2")
 
     outbox = ap.Outbox(me)
-    f = ap.Follow(
-        actor=me.id,
-        object=other.id,
-    )
+    f = ap.Follow(actor=me.id, object=other.id)
 
     outbox.post(f)
 
     back.assert_called_methods(
-            me,
-            (
-                'follow is saved in the actor inbox',
-                'outbox_new',
-                lambda as_actor: _assert_eq(as_actor.id, me.id),
-                lambda activity: _assert_eq(activity.id, f.id)
-            ),
-            (
-                'follow is sent to the remote followee inbox',
-                'post_to_remote_inbox',
-                lambda as_actor: _assert_eq(as_actor.id, me.id),
-                lambda payload: None,
-                lambda recipient: _assert_eq(recipient, other.inbox),
-            ),
-            (
-                'receiving an accept, ensure we check the actor is not blocked',
-                'outbox_is_blocked',
-                lambda as_actor: _assert_eq(as_actor.id, me.id),
-                lambda remote_actor: _assert_eq(remote_actor, other.id),
-            ),
-            (
-                'receiving the accept response from the follow',
-                'inbox_new',
-                lambda as_actor: _assert_eq(as_actor.id, me.id),
-                lambda activity: _assert_eq(activity.get_object().id, f.id),
-            ),
-            (
-                'the new_following hook is called',
-                'new_following',
-                lambda as_actor: _assert_eq(as_actor.id, me.id),
-                lambda activity: _assert_eq(activity.id, f.id),
-            ),
+        me,
+        (
+            "follow is saved in the actor inbox",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, f.id),
+        ),
+        (
+            "follow is sent to the remote followee inbox",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, other.inbox),
+        ),
+        (
+            "receiving an accept, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda remote_actor: _assert_eq(remote_actor, other.id),
+        ),
+        (
+            "receiving the accept response from the follow",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.get_object().id, f.id),
+        ),
+        (
+            "the new_following hook is called",
+            "new_following",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, f.id),
+        ),
     )
 
     back.assert_called_methods(
-            other,
-            (
-                'receiving the follow, ensure we check the actor is not blocked',
-                'outbox_is_blocked',
-                lambda as_actor: _assert_eq(as_actor.id, other.id),
-                lambda remote_actor: _assert_eq(remote_actor, me.id),
-            ),
-            (
-                'receiving the follow activity',
-                'inbox_new',
-                lambda as_actor: _assert_eq(as_actor.id, other.id),
-                lambda activity: _assert_eq(activity.id, f.id),
-            ),
-            (
-                'posting an accept in response to the follow',
-                'outbox_new',
-                lambda as_actor: _assert_eq(as_actor.id, other.id),
-                lambda activity: _assert_eq(activity.get_object().id, f.id),
-            ),
-            (
-                'post the accept to the remote follower inbox',
-                'post_to_remote_inbox',
-                lambda as_actor: _assert_eq(as_actor.id, other.id),
-                lambda payload: None,
-                lambda recipient: _assert_eq(recipient, me.inbox),
-            ),
-            (
-                'the new_follower hook is called',
-                'new_follower',
-                lambda as_actor: _assert_eq(as_actor.id, other.id),
-                lambda activity: _assert_eq(activity.id, f.id),
-            ),
+        other,
+        (
+            "receiving the follow, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda remote_actor: _assert_eq(remote_actor, me.id),
+        ),
+        (
+            "receiving the follow activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, f.id),
+        ),
+        (
+            "posting an accept in response to the follow",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.get_object().id, f.id),
+        ),
+        (
+            "post the accept to the remote follower inbox",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, me.inbox),
+        ),
+        (
+            "the new_follower hook is called",
+            "new_follower",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, f.id),
+        ),
     )
-
 
     assert back.followers(other) == [me.id]
     assert back.following(other) == []
@@ -104,15 +101,12 @@ def test_little_boxes_follow_unfollow():
     back = ap.BaseBackend()
     ap.use_backend(back)
 
-    me = back.setup_actor('Thomas', 'tom')
+    me = back.setup_actor("Thomas", "tom")
 
-    other = back.setup_actor('Thomas', 'tom2')
+    other = back.setup_actor("Thomas", "tom2")
 
     outbox = ap.Outbox(me)
-    f = ap.Follow(
-        actor=me.id,
-        object=other.id,
-    )
+    f = ap.Follow(actor=me.id, object=other.id)
 
     outbox.post(f)
 
@@ -128,4 +122,4 @@ def test_little_boxes_follow_unfollow():
     # assert back.following(other) == []
 
     # assert back.followers(me) == []
-    # assert back.following(me) == [] 
+    # assert back.following(me) == []

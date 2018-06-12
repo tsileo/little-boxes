@@ -7,4 +7,5 @@ install:
 script:
 # - mypy --ignore-missing-imports .
 # - flake8 .
- - python -m pytest -vv
+ - black --check
+ - python -m pytest -vv -cov=little_boxes
