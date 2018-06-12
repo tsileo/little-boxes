@@ -118,7 +118,7 @@ def _get_actor_id(actor: ObjectOrIDType) -> str:
 def track_call(f):
     fname = f.__name__
     def wrapper(*args, **kwargs):
-        args[0]._METHOD_CALLS.append((fname, args, kwargs))
+        args[0]._METHOD_CALLS[args[1].id].append((fname, args, kwargs))
         return f(*args, **kwargs)
     return wrapper
 
@@ -135,26 +135,35 @@ class BaseBackend(object):
     FOLLOWING = {}
 
     # For tests purposes only
-    _METHOD_CALLS = []
+    _METHOD_CALLS = {}
 
-    def called_methods(self) -> List[str]:
-        data = list(self._METHOD_CALLS)
-        self._METHOD_CALLS = []
+    def called_methods(self, p: 'Person') -> List[str]:
+        data = list(self._METHOD_CALLS[p.id])
+        self._METHOD_CALLS[p.id] = []
         return data
 
-    def assert_called_methods(self, *asserts) -> List[str]:
-        calls = self.called_methods()
+    def assert_called_methods(self, p: 'Person', *asserts) -> List[str]:
+        calls = self.called_methods(p)
         for i, assert_data in enumerate(asserts):
             if len(calls) < i+1:
                 raise ValueError(f'no methods called at step #{i}')
-            name, *funcs = assert_data
+            error_msg, name, *funcs = assert_data
             if name != calls[i][0]:
                 raise ValueError(f'expected method {name} to be called at step #{i}, but got {calls[i][0]}')
+            if len(funcs) < len(calls[i][1])-1:
+                raise ValueError(f'args left unchecked for method {name} at step #{i}')
             for z, f in enumerate(funcs):
                 if len(calls[i][1]) < z+2:  # XXX(tsileo): 0 will be self
                     raise ValueError(f'method {name} has no args at index {Z}')
-                f(calls[i][1][z+1])
+                try:
+                    f(calls[i][1][z+1])
+                except AssertionError as ae:
+                    ae.args = ((error_msg),)
+                    raise ae
 
+        if len(asserts) < len(calls):
+            raise ValueError(f'expecting {len(calls)} assertion, only got {len(asserts)}, leftover: {calls[len(asserts):]!r}')
+        
         return calls
 
     def random_object_id(self) -> str:
@@ -182,6 +191,7 @@ class BaseBackend(object):
         self.FOLLOWERS[p.id] = []
         self.FOLLOWING[p.id] = []
         self.FETCH_MOCK[p.id] = p.to_dict()
+        self._METHOD_CALLS[p.id] = []
         return p
 
     def fetch_iri(self, iri: str):
@@ -220,7 +230,7 @@ class BaseBackend(object):
         return 'TODO'
 
     @track_call
-    def outbox_new(self, activity: 'BaseActivity') -> None:
+    def outbox_new(self, as_actor: 'Person', activity: 'BaseActivity') -> None:
         print(f'saving {activity!r} to DB')
         actor_id = activity.get_actor().id
         if activity.id in self.OUTBOX_IDX[actor_id]:
@@ -252,7 +262,7 @@ class BaseBackend(object):
         return self.FOLLOWING[as_actor.id]
 
     @track_call
-    def post_to_remote_inbox(self, payload_encoded: str, recp: str) -> None:
+    def post_to_remote_inbox(self, as_actor: 'Person', payload_encoded: str, recp: str) -> None:
         payload = json.loads(payload_encoded)
         print(f'post_to_remote_inbox {payload} {recp}')
         act = parse_activity(payload)
@@ -576,7 +586,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         except NotImplementedError:
             logger.debug('pre post to outbox hook not implemented')
 
-        BACKEND.outbox_new(self)
+        BACKEND.outbox_new(self.get_actor(), self)
 
         recipients = self.recipients()
         logger.info(f'recipients={recipients}')
@@ -592,7 +602,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         for recp in recipients:
             logger.debug(f'posting to {recp}')
 
-            BACKEND.post_to_remote_inbox(payload, recp)
+            BACKEND.post_to_remote_inbox(self.get_actor(), payload, recp)
 
     def _recipients(self) -> List[str]:
         return []

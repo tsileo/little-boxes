@@ -22,25 +22,76 @@ def test_little_boxes_follow():
 
     outbox.post(f)
 
-    # FIXME(tsileo): two assert, one for `me` and one for `other`
     back.assert_called_methods(
+            me,
             (
+                'follow is saved in the actor inbox',
                 'outbox_new',
+                lambda as_actor: _assert_eq(as_actor.id, me.id),
                 lambda activity: _assert_eq(activity.id, f.id)
             ),
             (
+                'follow is sent to the remote followee inbox',
                 'post_to_remote_inbox',
+                lambda as_actor: _assert_eq(as_actor.id, me.id),
                 lambda payload: None,
-                lambda recipient: _assert_eq(recipient, other.id+'/inbox'),
+                lambda recipient: _assert_eq(recipient, other.inbox),
             ),
             (
+                'receiving an accept, ensure we check the actor is not blocked',
+                'outbox_is_blocked',
+                lambda as_actor: _assert_eq(as_actor.id, me.id),
+                lambda remote_actor: _assert_eq(remote_actor, other.id),
+            ),
+            (
+                'receiving the accept response from the follow',
+                'inbox_new',
+                lambda as_actor: _assert_eq(as_actor.id, me.id),
+                lambda activity: _assert_eq(activity.get_object().id, f.id),
+            ),
+            (
+                'the new_following hook is called',
+                'new_following',
+                lambda as_actor: _assert_eq(as_actor.id, me.id),
+                lambda activity: _assert_eq(activity.id, f.id),
+            ),
+    )
+
+    back.assert_called_methods(
+            other,
+            (
+                'receiving the follow, ensure we check the actor is not blocked',
                 'outbox_is_blocked',
                 lambda as_actor: _assert_eq(as_actor.id, other.id),
                 lambda remote_actor: _assert_eq(remote_actor, me.id),
             ),
-            # FIXME(tsileo): finish this
-            # ('new_following', lambda x: _assert_eq(x, me.id), lambda x: _assert_eq(x.id, f.id)),
+            (
+                'receiving the follow activity',
+                'inbox_new',
+                lambda as_actor: _assert_eq(as_actor.id, other.id),
+                lambda activity: _assert_eq(activity.id, f.id),
+            ),
+            (
+                'posting an accept in response to the follow',
+                'outbox_new',
+                lambda as_actor: _assert_eq(as_actor.id, other.id),
+                lambda activity: _assert_eq(activity.get_object().id, f.id),
+            ),
+            (
+                'post the accept to the remote follower inbox',
+                'post_to_remote_inbox',
+                lambda as_actor: _assert_eq(as_actor.id, other.id),
+                lambda payload: None,
+                lambda recipient: _assert_eq(recipient, me.inbox),
+            ),
+            (
+                'the new_follower hook is called',
+                'new_follower',
+                lambda as_actor: _assert_eq(as_actor.id, other.id),
+                lambda activity: _assert_eq(activity.id, f.id),
+            ),
     )
+
 
     assert back.followers(other) == [me.id]
     assert back.following(other) == []
