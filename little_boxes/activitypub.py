@@ -235,7 +235,7 @@ class BaseBackend(object):
 
     def activity_url(self, obj_id: str) -> str:
         # from the random hex ID
-        return "TODO"
+        return f'todo/{obj_id}'
 
     @track_call
     def outbox_new(self, as_actor: "Person", activity: "BaseActivity") -> None:

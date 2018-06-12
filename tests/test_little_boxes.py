@@ -1,6 +1,9 @@
-from unittest import mock
+import logging
 
 from little_boxes import activitypub as ap
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def _assert_eq(val, other):
@@ -96,30 +99,68 @@ def test_little_boxes_follow():
     assert back.followers(me) == []
     assert back.following(me) == [other.id]
 
+    return back, f
+
 
 def test_little_boxes_follow_unfollow():
-    back = ap.BaseBackend()
-    ap.use_backend(back)
+    back, f = test_little_boxes_follow()
 
-    me = back.setup_actor("Thomas", "tom")
+    me = back.get_user("tom")
 
-    other = back.setup_actor("Thomas", "tom2")
+    other = back.get_user("tom2")
 
     outbox = ap.Outbox(me)
-    f = ap.Follow(actor=me.id, object=other.id)
 
-    outbox.post(f)
+    undo = f.build_undo()
+    outbox.post(undo)
 
-    assert back.followers(other) == [me.id]
+    back.assert_called_methods(
+        me,
+        (
+            "an Undo activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, undo.id),
+        ),
+        (
+            "\"undo_new_following\" hook is called",
+            "undo_new_following",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda follow: _assert_eq(follow.id, f.id),
+        ),
+        (
+            "the Undo activity is posted to the followee",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, other.inbox),
+        ),
+    )
+
+    back.assert_called_methods(
+        other,
+        (
+            "receiving the Undo, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda remote_actor: _assert_eq(remote_actor, me.id),
+        ),
+        (
+            "receiving the Undo activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, undo.id),
+        ),
+        (
+            "\"undo_new_follower\" hook is called",
+            "undo_new_follower",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda follow: _assert_eq(follow.id, f.id),
+        ),
+    )
+
+    assert back.followers(other) == []
     assert back.following(other) == []
 
     assert back.followers(me) == []
-    assert back.following(me) == [other.id]
-
-    outbox.post(f.build_undo())
-
-    # assert back.followers(other) == []
-    # assert back.following(other) == []
-
-    # assert back.followers(me) == []
-    # assert back.following(me) == []
+    assert back.following(me) == []
