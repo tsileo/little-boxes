@@ -8,5 +8,5 @@ script:
 # - mypy --ignore-missing-imports .
 # - flake8 .
  - black --check
- - python -m pytest -vv -cov=little_boxes
+ - python -m pytest -v -cov=little_boxes
  - codecov
