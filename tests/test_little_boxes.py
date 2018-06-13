@@ -437,3 +437,15 @@ def test_little_boxes_follow_and_new_create_note():
     )
 
     return back, create
+
+
+def test_little_boxes_follow_and_new_create_note_and_delete():
+    back, create = test_little_boxes_follow_and_new_create_note()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(other)
+
+    delete = create.get_object().build_delete()
+    outbox.post(delete)

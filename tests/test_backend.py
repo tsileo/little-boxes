@@ -154,6 +154,9 @@ class InMemBackend(Backend):
             return
         self.DB[actor_id]["outbox"].append(activity)
         self.OUTBOX_IDX[actor_id][activity.id] = activity
+        self.FETCH_MOCK[activity.id] = activity.to_dict()
+        if isinstance(activity, ap.Create):
+            self.FETCH_MOCK[activity.get_object().id] = activity.get_object().to_dict()
 
     @track_call
     def new_follower(self, as_actor: ap.Person, follow: ap.Follow) -> None:
@@ -216,10 +219,10 @@ class InMemBackend(Backend):
     def outbox_undo_announce(self, activity: ap.Announce) -> None:
         pass
 
-    def inbox_delete(self, activity: ap.Delete) -> None:
+    def inbox_delete(self, as_actor: ap.Person, activity: ap.Delete) -> None:
         pass
 
-    def outbox_delete(self, activity: ap.Delete) -> None:
+    def outbox_delete(self, as_actor: ap.Person, activity: ap.Delete) -> None:
         pass
 
     def inbox_update(self, as_actor: ap.Person, activity: ap.Update) -> None:

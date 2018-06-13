@@ -6,7 +6,7 @@ install:
  - pip install -r dev-requirements.txt
 script:
 # - mypy --ignore-missing-imports little_boxes
- - flake8 .
+ - flake8 little_boxes
  - black --check .
  - python -m pytest -vv --cov=little_boxes
  - codecov

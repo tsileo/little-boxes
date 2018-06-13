@@ -19,7 +19,15 @@ class Backend(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def outbox_delete(self, as_actor: "ap.Person", activity: "ap.Delete") -> None:
+        pass
+
+    @abc.abstractmethod
     def inbox_create(self, as_actor: "ap.Person", activity: "ap.Create") -> None:
+        pass
+
+    @abc.abstractmethod
+    def inbox_delete(self, as_actor: "ap.Person", activity: "ap.Delete") -> None:
         pass
 
     @abc.abstractmethod

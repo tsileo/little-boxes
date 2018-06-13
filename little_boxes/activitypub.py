@@ -1,6 +1,7 @@
 """Core ActivityPub classes."""
 import logging
 import json
+import weakref
 from datetime import datetime
 from enum import Enum
 
@@ -238,10 +239,11 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             self._data.update(**valid_kwargs)
 
     def ctx(self) -> Any:
-        return self.__ctx
+        return self.__ctx()
 
     def set_ctx(self, ctx: Any) -> None:
-        self.__ctx = ctx
+        # FIXME(tsileo): does not use the ctx to set the id to the "parent" when building  delete
+        self.__ctx = weakref.ref(ctx)
 
     def _init(self, **kwargs) -> Optional[List[str]]:
         """Optional init callback that may returns a list of allowed keys."""
@@ -843,8 +845,10 @@ class Delete(BaseActivity):
         activity: ObjectType,
         recipients: List[str],
     ) -> None:
-        # ABC
-        self.outbox_delete(self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.outbox_delete(as_actor, self)
 
 
 class Update(BaseActivity):
@@ -892,10 +896,19 @@ class Create(BaseActivity):
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
-    def _set_id(self, uri: str, obj_id: str) -> None:
+    def _outbox_set_id(self, uri: str, obj_id: str) -> None:
         self._data["object"]["id"] = uri + "/activity"
-        # ABC
-        self._data["object"]["url"] = self.note_url(self)
+        if isinstance(self.ctx(), Note):
+            try:
+                print("SETTING ID")
+                # FIXME(tsileo): use a weakref instead of ctx, and make it generic to every object (when
+                # building things (and drop the set_ctx usage)
+                self.ctx().id = self._data["object"]["id"]
+                print(f"CTX {self.ctx()}")
+            except NotImplementedError:
+                pass
+        # FIXME(tsileo): re-enable this
+        # self._data["object"]["url"] = self.note_url(self)
         self.reset_object_cache()
 
     def _init(self, **kwargs):
@@ -986,7 +999,10 @@ class Note(BaseActivity):
             if field in self._data:
                 create_payload[field] = self._data[field]
 
-        return Create(**create_payload)
+        create = Create(**create_payload)
+        create.set_ctx(self)
+
+        return create
 
     def build_like(self) -> BaseActivity:
         return Like(object=self.id)
@@ -1003,7 +1019,9 @@ class Note(BaseActivity):
         )
 
     def build_delete(self) -> BaseActivity:
-        return Delete(object=Tombstone(id=self.id).to_dict(embed=True))
+        return Delete(
+            actor=self.get_actor().id, object=Tombstone(id=self.id).to_dict(embed=True)
+        )
 
     def get_tombstone(self, deleted: Optional[str]) -> BaseActivity:
         return Tombstone(
