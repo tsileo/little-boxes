@@ -1,9 +1,8 @@
 # Little Boxes
 
 <a href="https://travis-ci.org/tsileo/little-boxes"><img src="https://travis-ci.org/tsileo/little-boxes.svg?branch=master" alt="Build Status"></a>
-<a href="https://codecov.io/gh/tsileo/little-boxes"><img src="https://codecov.io/gh/tsileo/little-boxes/branch/master/graph/badge.svg" /></a>
 <img src="https://img.shields.io/pypi/pyversions/little-boxes.svg" />
-<a href="https://github.com/tsileo/little-boxes/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-ISC-blue.svg?style=flat" alt="License"></a>
+<a href="https://github.com/tsileo/little-boxes/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-ISC-red.svg?style=flat" alt="License"></a>
 
 Tiny [ActivityPub](https://activitypub.rocks/) framework written in Python, both database and server agnostic.
 
@@ -17,16 +16,16 @@ from little_boxes import activitypub as ap
 from mydb import db_client
 
 
-class MyBackend(BaseBackend):
+class MyBackend(ap.Backend):
 
     def __init__(self, db_connection):
         self.db_connection = db_connection    
 
-    def inbox_new(self, as_actor, activity):
+    def inbox_new(self, as_actor: ap.Person, activity: ap.Activity) -> None:
         # Save activity as "as_actor"
         # [...]
 
-    def post_to_remote_inbox(self, as_actor, payload, recipient):
+    def post_to_remote_inbox(self, as_actor: ap.Person, payload: ap.ObjectType, recipient: str) -> None:
         # Send the activity to the remote actor
         # [...]
 
