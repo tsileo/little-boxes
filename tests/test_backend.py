@@ -219,9 +219,11 @@ class InMemBackend(Backend):
     def outbox_undo_announce(self, activity: ap.Announce) -> None:
         pass
 
+    @track_call
     def inbox_delete(self, as_actor: ap.Person, activity: ap.Delete) -> None:
         pass
 
+    @track_call
     def outbox_delete(self, as_actor: ap.Person, activity: ap.Delete) -> None:
         pass
 

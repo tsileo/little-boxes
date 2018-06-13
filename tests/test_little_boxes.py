@@ -449,3 +449,48 @@ def test_little_boxes_follow_and_new_create_note_and_delete():
 
     delete = create.get_object().build_delete()
     outbox.post(delete)
+
+    back.assert_called_methods(
+        other,
+        (
+            "an Delete activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, delete.id),
+        ),
+        (
+            '"outbox_create" hook is called',
+            "outbox_delete",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda _delete: _assert_eq(_delete.id, delete.id),
+        ),
+        (
+            "the Delete activity is posted to the followers",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, me.inbox),
+        ),
+    )
+
+    back.assert_called_methods(
+        me,
+        (
+            "receiving the Delete, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda remote_actor: _assert_eq(remote_actor, other.id),
+        ),
+        (
+            "receiving the Delete activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, delete.id),
+        ),
+        (
+            '"inbox_delete" hook is called',
+            "inbox_delete",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda _delete: _assert_eq(_delete.id, delete.id),
+        ),
+    )
