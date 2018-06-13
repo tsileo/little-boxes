@@ -2,7 +2,7 @@ import abc
 import typing
 
 if typing.TYPE_CHECKING:
-    from little_boxes import activitypub as ap
+    from little_boxes import activitypub as ap  # noqa: type checking
 
 
 class Backend(abc.ABC):

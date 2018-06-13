@@ -24,7 +24,7 @@ from typing import Type
 
 logger = logging.getLogger(__name__)
 
-UninitializedBackendError = Error('a backend must be initialized')
+UninitializedBackendError = Error("a backend must be initialized")
 
 # Helper/shortcut for typing
 ObjectType = Dict[str, Any]
@@ -591,7 +591,7 @@ class Follow(BaseActivity):
         # XXX The new_following event will be triggered by Accept
         pass
 
-    def _undo_inbox(self, as_actor: 'Person') -> None:
+    def _undo_inbox(self, as_actor: "Person") -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
