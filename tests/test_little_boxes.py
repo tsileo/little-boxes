@@ -324,7 +324,10 @@ def test_little_boxes_follow_and_new_note_to_followers_and_single_actor_dedup():
     outbox = ap.Outbox(me)
 
     note = ap.Note(
-        to=[ap.AS_PUBLIC], cc=[other.id, me.followers], attributedTo=me.id, content="Hello"
+        to=[ap.AS_PUBLIC],
+        cc=[other.id, me.followers],
+        attributedTo=me.id,
+        content="Hello",
     )
     outbox.post(note)
 
