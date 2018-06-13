@@ -9,8 +9,8 @@ from enum import Enum
 from .errors import BadActivityError
 from .errors import UnexpectedActivityTypeError
 from .errors import NotFromOutboxError
-from .errors import ActivityNotFoundError
-from .urlutils import check_url
+# from .errors import ActivityNotFoundError
+# from .urlutils import check_url
 from .utils import parse_collection
 
 from typing import List
@@ -19,8 +19,6 @@ from typing import Dict
 from typing import Any
 from typing import Union
 from typing import Type
-
-import requests
 
 
 logger = logging.getLogger(__name__)
@@ -323,10 +321,12 @@ class BaseBackend(object):
     def outbox_update(self, activity: "Update") -> None:
         pass
 
-    def inbox_create(self, activity: "Create") -> None:
+    @track_call
+    def inbox_create(self, as_actor: "Person", activity: "Create") -> None:
         pass
 
-    def outbox_create(self, activity: "Create") -> None:
+    @track_call
+    def outbox_create(self, as_actor: "Person", activity: "Create") -> None:
         pass
 
 
@@ -357,7 +357,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         True
     )  # Most of the object requires an actor, so this flag in on by default
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs) -> None:  # noqa: C901
         if kwargs.get("type") and kwargs.pop("type") != self.ACTIVITY_TYPE.value:
             raise UnexpectedActivityTypeError(
                 f"Expect the type to be {self.ACTIVITY_TYPE.value!r}"
@@ -380,6 +380,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 kwargs.pop("actor")
                 actor = self._validate_person(actor)
                 self._data["actor"] = actor
+            elif self.ACTIVITY_TYPE == ActivityType.NOTE:
+                if 'attributedTo' not in kwargs:
+                    raise BadActivityError(f"Note is missing attributedTo")
             else:
                 raise BadActivityError("missing actor")
 
@@ -561,7 +564,11 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         raise NotImplementedError
 
     def _post_to_outbox(
-        self, obj_id: str, activity: ObjectType, recipients: List[str]
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
     ) -> None:
         raise NotImplementedError
 
@@ -630,7 +637,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         activity = clean_activity(self.to_dict())
 
         try:
-            self._post_to_outbox(obj_id, activity, recipients)
+            self._post_to_outbox(self.get_actor(), obj_id, activity, recipients)
             logger.debug(f"called post to outbox hook")
         except NotImplementedError:
             logger.debug("post to outbox hook not implemented")
@@ -644,7 +651,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     def _recipients(self) -> List[str]:
         return []
 
-    def recipients(self) -> List[str]:
+    def recipients(self) -> List[str]:  # noqa: C901
         recipients = self._recipients()
         actor_id = self.get_actor().id
 
@@ -759,7 +766,11 @@ class Follow(BaseActivity):
         BACKEND.new_follower(self.get_object(), self)
 
     def _post_to_outbox(
-        self, obj_id: str, activity: ObjectType, recipients: List[str]
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
     ) -> None:
         # XXX The new_following event will be triggered by Accept
         pass
@@ -837,7 +848,11 @@ class Undo(BaseActivity):
             raise NotFromOutboxError(f"object {self!r} is not owned by this instance")
 
     def _post_to_outbox(
-        self, obj_id: str, activity: ObjectType, recipients: List[str]
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
     ) -> None:
         logger.debug("processing undo to outbox")
         logger.debug("self={}".format(self))
@@ -872,7 +887,13 @@ class Like(BaseActivity):
         # ABC
         self.inbox_undo_like(self)
 
-    def _post_to_outbox(self, obj_id: str, activity: ObjectType, recipients: List[str]):
+    def _post_to_outbox(
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
+    ):
         # ABC
         self.outbox_like(self)
 
@@ -920,7 +941,11 @@ class Announce(BaseActivity):
         self.inbox_undo_annnounce(self)
 
     def _post_to_outbox(
-        self, obj_id: str, activity: ObjectType, recipients: List[str]
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
     ) -> None:
         # ABC
         self.outbox_announce(self)
@@ -971,7 +996,11 @@ class Delete(BaseActivity):
             )
 
     def _post_to_outbox(
-        self, obj_id: str, activity: ObjectType, recipients: List[str]
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
     ) -> None:
         # ABC
         self.outbox_delete(self)
@@ -1000,7 +1029,11 @@ class Update(BaseActivity):
             raise NotFromOutboxError(f"object {self!r} is not owned by this instance")
 
     def _post_to_outbox(
-        self, obj_id: str, activity: ObjectType, recipients: List[str]
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
     ) -> None:
         # ABC
         self.outbox_update(self)
@@ -1042,14 +1075,16 @@ class Create(BaseActivity):
         return recipients
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
-        # ABC
-        self.inbox_create(self)
+        BACKEND.inbox_create(as_actor, self)
 
     def _post_to_outbox(
-        self, obj_id: str, activity: ObjectType, recipients: List[str]
+        self,
+        as_actor: "Person",
+        obj_id: str,
+        activity: ObjectType,
+        recipients: List[str],
     ) -> None:
-        # ABC
-        self.outbox_create(self)
+        BACKEND.outbox_create(self.get_actor(), self)
 
 
 class Tombstone(BaseActivity):
@@ -1124,7 +1159,7 @@ class Note(BaseActivity):
 
 
 class Box(object):
-    def __init__(self, actor: Person):
+    def __init__(self, actor: Person) -> None:
         self.actor = actor
 
 
@@ -1134,6 +1169,9 @@ class Outbox(Box):
             raise ValueError(
                 f"{activity.get_actor()!r} cannot post into {self.actor!r} outbox"
             )
+
+        if activity.ACTIVITY_TYPE == ActivityType.NOTE:
+            activity = activity.build_create()
 
         activity.post_to_outbox()
 

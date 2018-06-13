@@ -27,7 +27,10 @@ class Error(Exception):
         return rv
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__qualname__}({self.message!r}, payload={self.payload!r}, status_code={self.status_code})"
+        return (
+            f"{self.__class__.__qualname__}({self.message!r}, "
+            f"payload={self.payload!r}, status_code={self.status_code})"
+        )
 
 
 class ActorBlockedError(Error):

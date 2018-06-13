@@ -164,3 +164,92 @@ def test_little_boxes_follow_unfollow():
 
     assert back.followers(me) == []
     assert back.following(me) == []
+
+
+def test_little_boxes_follow_and_new_note_public_only():
+    back, f = test_little_boxes_follow()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(me)
+
+    note = ap.Note(to=[ap.AS_PUBLIC], cc=[], attributedTo=me.id, content="Hello")
+    outbox.post(note)
+
+    back.assert_called_methods(
+        me,
+        (
+            "an Create activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.get_object().id, note.id),
+        ),
+        (
+            '"outbox_create" hook is called',
+            "outbox_create",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda create: _assert_eq(create.get_object().id, note.id),
+        ),
+    )
+
+    back.assert_called_methods(other)
+
+
+def test_little_boxes_follow_and_new_note_to_single_actor():
+    back, f = test_little_boxes_follow()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(me)
+
+    note = ap.Note(
+        to=[ap.AS_PUBLIC], cc=[other.id], attributedTo=me.id, content="Hello"
+    )
+    outbox.post(note)
+
+    back.assert_called_methods(
+        me,
+        (
+            "an Create activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.get_object().id, note.id),
+        ),
+        (
+            '"outbox_create" hook is called',
+            "outbox_create",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda create: _assert_eq(create.get_object().id, note.id),
+        ),
+        (
+            "the Undo activity is posted to the followee",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, other.inbox),
+        ),
+    )
+
+    back.assert_called_methods(
+        other,
+        (
+            "receiving the Undo, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda remote_actor: _assert_eq(remote_actor, me.id),
+        ),
+        (
+            "receiving the Create activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.get_object().id, note.id),
+        ),
+        (
+            '"inbox_create" hook is called',
+            "inbox_create",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda create: _assert_eq(create.get_object().id, note.id),
+        ),
+    )
