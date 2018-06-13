@@ -192,6 +192,7 @@ class BaseBackend(object):
             id=f"https://lol.com/{pusername}",
             inbox=f"https://lol.com/{pusername}/inbox",
             followers=f"https://lol.com/{pusername}/followers",
+            following=f"https://lol.com/{pusername}/following",
         )
 
         self.USERS[p.preferredUsername] = p
@@ -207,6 +208,14 @@ class BaseBackend(object):
     def fetch_iri(self, iri: str):
         if iri.endswith("/followers"):
             data = self.FOLLOWERS[iri.replace("/followers", "")]
+            return {
+                "id": iri,
+                "type": ActivityType.ORDERED_COLLECTION.value,
+                "totalItems": len(data),
+                "orderedItems": data,
+            }
+        if iri.endswith("/following"):
+            data = self.FOLLOWING[iri.replace("/following", "")]
             return {
                 "id": iri,
                 "type": ActivityType.ORDERED_COLLECTION.value,
