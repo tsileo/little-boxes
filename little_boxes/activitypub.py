@@ -237,10 +237,10 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 valid_kwargs[k] = v
             self._data.update(**valid_kwargs)
 
-    def ctx(self) -> Dict[str, Any]:
+    def ctx(self) -> Any:
         return self.__ctx
 
-    def set_ctx(self, ctx: Dict[str, Any]) -> None:
+    def set_ctx(self, ctx: Any) -> None:
         self.__ctx = ctx
 
     def _init(self, **kwargs) -> Optional[List[str]]:

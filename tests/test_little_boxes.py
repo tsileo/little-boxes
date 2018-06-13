@@ -375,3 +375,65 @@ def test_little_boxes_follow_and_new_note_to_followers_and_single_actor_dedup():
             lambda create: _assert_eq(create.get_object().id, note.id),
         ),
     )
+
+
+def test_little_boxes_follow_and_new_create_note():
+    back, f = test_little_boxes_follow()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(other)
+
+    note = ap.Note(
+        to=[ap.AS_PUBLIC], cc=[other.followers], attributedTo=other.id, content="Hello"
+    )
+    create = note.build_create()
+    outbox.post(create)
+
+    back.assert_called_methods(
+        other,
+        (
+            "an Create activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, create.id),
+        ),
+        (
+            '"outbox_create" hook is called',
+            "outbox_create",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda _create: _assert_eq(_create.id, create.id),
+        ),
+        (
+            "the Undo activity is posted to the followee",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, me.inbox),
+        ),
+    )
+
+    back.assert_called_methods(
+        me,
+        (
+            "receiving the Undo, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda remote_actor: _assert_eq(remote_actor, other.id),
+        ),
+        (
+            "receiving the Create activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, create.id),
+        ),
+        (
+            '"inbox_create" hook is called',
+            "inbox_create",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda _create: _assert_eq(_create.id, create.id),
+        ),
+    )
+
+    return back, create

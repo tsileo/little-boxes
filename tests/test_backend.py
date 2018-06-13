@@ -8,9 +8,8 @@ from little_boxes.backend import Backend
 import little_boxes.activitypub as ap
 
 
-# FIXME(tsileo): keeps differents list of each `as_actor`, and uses `as_actor` as first
-# arg for everything.
 def track_call(f):
+    """Method decorator used to track the events fired during tests."""
     fname = f.__name__
 
     def wrapper(*args, **kwargs):

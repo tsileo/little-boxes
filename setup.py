@@ -20,7 +20,7 @@ REQUIRES_PYTHON = ">=3.6.0"
 VERSION = None
 
 
-REQUIRED = ["requests", "markdown", "pyld", "pycryptodome", "html2text"]
+REQUIRED = ["requests", "markdown", "bleach", "pyld", "pycryptodome", "html2text"]
 
 DEPENDENCY_LINKS = []
 
