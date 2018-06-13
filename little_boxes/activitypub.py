@@ -9,6 +9,7 @@ from enum import Enum
 from .errors import BadActivityError
 from .errors import UnexpectedActivityTypeError
 from .errors import NotFromOutboxError
+
 # from .errors import ActivityNotFoundError
 # from .urlutils import check_url
 from .utils import parse_collection
@@ -190,6 +191,7 @@ class BaseBackend(object):
             summary="Hello",
             id=f"https://lol.com/{pusername}",
             inbox=f"https://lol.com/{pusername}/inbox",
+            followers=f"https://lol.com/{pusername}/followers",
         )
 
         self.USERS[p.preferredUsername] = p
@@ -203,6 +205,14 @@ class BaseBackend(object):
         return p
 
     def fetch_iri(self, iri: str):
+        if iri.endswith("/followers"):
+            data = self.FOLLOWERS[iri.replace("/followers", "")]
+            return {
+                "id": iri,
+                "type": ActivityType.ORDERED_COLLECTION.value,
+                "totalItems": len(data),
+                "orderedItems": data,
+            }
         return self.FETCH_MOCK[iri]
 
     def get_user(self, username: str) -> "Person":
@@ -381,7 +391,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 actor = self._validate_person(actor)
                 self._data["actor"] = actor
             elif self.ACTIVITY_TYPE == ActivityType.NOTE:
-                if 'attributedTo' not in kwargs:
+                if "attributedTo" not in kwargs:
                     raise BadActivityError(f"Note is missing attributedTo")
             else:
                 raise BadActivityError("missing actor")
@@ -686,7 +696,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                     ActivityType.COLLECTION.value,
                     ActivityType.ORDERED_COLLECTION.value,
                 ]:
-                    for item in parse_collection(raw_actor):
+                    for item in parse_collection(raw_actor, fetcher=BACKEND.fetch_iri):
                         if item in [actor_id, AS_PUBLIC]:
                             continue
                         try:
