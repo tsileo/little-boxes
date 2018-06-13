@@ -1,18 +1,18 @@
 """Core ActivityPub classes."""
 import logging
 import json
-import binascii
-import os
 from datetime import datetime
 from enum import Enum
 
 from .errors import BadActivityError
 from .errors import UnexpectedActivityTypeError
+from .errors import Error
 from .errors import NotFromOutboxError
 
 # from .errors import ActivityNotFoundError
 # from .urlutils import check_url
 from .utils import parse_collection
+from .backend import Backend
 
 from typing import List
 from typing import Optional
@@ -23,6 +23,8 @@ from typing import Type
 
 
 logger = logging.getLogger(__name__)
+
+UninitializedBackendError = Error('a backend must be initialized')
 
 # Helper/shortcut for typing
 ObjectType = Dict[str, Any]
@@ -39,9 +41,9 @@ COLLECTION_CTX = [
 ]
 
 # Will be used to keep track of all the defined activities
-_ACTIVITY_CLS: Dict["ActivityTypeEnum", Type["_BaseActivity"]] = {}
+_ACTIVITY_CLS: Dict["ActivityType", Type["BaseActivity"]] = {}
 
-BACKEND = None
+BACKEND: Optional[Backend] = None
 
 
 def use_backend(backend_instance):
@@ -117,238 +119,6 @@ def _get_actor_id(actor: ObjectOrIDType) -> str:
     return actor
 
 
-# FIXME(tsileo): keeps differents list of each `as_actor`, and uses `as_actor` as first
-# arg for everything.
-def track_call(f):
-    fname = f.__name__
-
-    def wrapper(*args, **kwargs):
-        args[0]._METHOD_CALLS[args[1].id].append((fname, args, kwargs))
-        return f(*args, **kwargs)
-
-    return wrapper
-
-
-# FIXME(tsileo): move this to little_boxes.tests.InMemBackend and make this one an
-# abstract classes
-class BaseBackend(object):
-    """In-memory backend meant to be used for the test suite."""
-
-    DB = {}
-    USERS = {}
-    FETCH_MOCK = {}
-    INBOX_IDX = {}
-    OUTBOX_IDX = {}
-    FOLLOWERS = {}
-    FOLLOWING = {}
-
-    # For tests purposes only
-    _METHOD_CALLS = {}
-
-    def called_methods(self, p: "Person") -> List[str]:
-        data = list(self._METHOD_CALLS[p.id])
-        self._METHOD_CALLS[p.id] = []
-        return data
-
-    def assert_called_methods(self, p: "Person", *asserts) -> List[str]:
-        calls = self.called_methods(p)
-        for i, assert_data in enumerate(asserts):
-            if len(calls) < i + 1:
-                raise ValueError(f"no methods called at step #{i}")
-            error_msg, name, *funcs = assert_data
-            if name != calls[i][0]:
-                raise ValueError(
-                    f"expected method {name} to be called at step #{i}, but got {calls[i][0]}"
-                )
-            if len(funcs) < len(calls[i][1]) - 1:
-                raise ValueError(f"args left unchecked for method {name} at step #{i}")
-            for z, f in enumerate(funcs):
-                if len(calls[i][1]) < z + 2:  # XXX(tsileo): 0 will be self
-                    raise ValueError(f"method {name} has no args at index {z}")
-                try:
-                    f(calls[i][1][z + 1])
-                except AssertionError as ae:
-                    ae.args = ((error_msg),)
-                    raise ae
-
-        if len(asserts) < len(calls):
-            raise ValueError(
-                f"expecting {len(calls)} assertion, only got {len(asserts)},"
-                f"leftover: {calls[len(asserts):]!r}"
-            )
-
-        return calls
-
-    def random_object_id(self) -> str:
-        """Generates a random object ID."""
-        return binascii.hexlify(os.urandom(8)).decode("utf-8")
-
-    def setup_actor(self, name, pusername):
-        """Create a new actor in this backend."""
-        p = Person(
-            name=name,
-            preferredUsername=pusername,
-            summary="Hello",
-            id=f"https://lol.com/{pusername}",
-            inbox=f"https://lol.com/{pusername}/inbox",
-            followers=f"https://lol.com/{pusername}/followers",
-            following=f"https://lol.com/{pusername}/following",
-        )
-
-        self.USERS[p.preferredUsername] = p
-        self.DB[p.id] = {"inbox": [], "outbox": []}
-        self.INBOX_IDX[p.id] = {}
-        self.OUTBOX_IDX[p.id] = {}
-        self.FOLLOWERS[p.id] = []
-        self.FOLLOWING[p.id] = []
-        self.FETCH_MOCK[p.id] = p.to_dict()
-        self._METHOD_CALLS[p.id] = []
-        return p
-
-    def fetch_iri(self, iri: str):
-        if iri.endswith("/followers"):
-            data = self.FOLLOWERS[iri.replace("/followers", "")]
-            return {
-                "id": iri,
-                "type": ActivityType.ORDERED_COLLECTION.value,
-                "totalItems": len(data),
-                "orderedItems": data,
-            }
-        if iri.endswith("/following"):
-            data = self.FOLLOWING[iri.replace("/following", "")]
-            return {
-                "id": iri,
-                "type": ActivityType.ORDERED_COLLECTION.value,
-                "totalItems": len(data),
-                "orderedItems": data,
-            }
-        return self.FETCH_MOCK[iri]
-
-    def get_user(self, username: str) -> "Person":
-        if username in self.USERS:
-            return self.USERS[username]
-        else:
-            raise ValueError(f"bad username {username}")
-
-    @track_call
-    def outbox_is_blocked(self, as_actor: "Person", actor_id: str) -> bool:
-        """Returns True if `as_actor` has blocked `actor_id`."""
-        for activity in self.DB[as_actor.id]["outbox"]:
-            if activity.ACTIVITY_TYPE == ActivityType.BLOCK:
-                return True
-        return False
-
-    def inbox_get_by_iri(
-        self, as_actor: "Person", iri: str
-    ) -> Optional["BaseActivity"]:
-        for activity in self.DB[as_actor.id]["inbox"]:
-            if activity.id == iri:
-                return activity
-
-        return None
-
-    @track_call
-    def inbox_new(self, as_actor: "Person", activity: "BaseActivity") -> None:
-        if activity.id in self.INBOX_IDX[as_actor.id]:
-            return
-        self.DB[as_actor.id]["inbox"].append(activity)
-        self.INBOX_IDX[as_actor.id][activity.id] = activity
-
-    def activity_url(self, obj_id: str) -> str:
-        # from the random hex ID
-        return f"todo/{obj_id}"
-
-    @track_call
-    def outbox_new(self, as_actor: "Person", activity: "BaseActivity") -> None:
-        print(f"saving {activity!r} to DB")
-        actor_id = activity.get_actor().id
-        if activity.id in self.OUTBOX_IDX[actor_id]:
-            return
-        self.DB[actor_id]["outbox"].append(activity)
-        self.OUTBOX_IDX[actor_id][activity.id] = activity
-
-    @track_call
-    def new_follower(self, as_actor: "Person", follow: "Follow") -> None:
-        self.FOLLOWERS[follow.get_object().id].append(follow.get_actor().id)
-
-    @track_call
-    def undo_new_follower(self, as_actor: "Person", follow: "Follow") -> None:
-        self.FOLLOWERS[follow.get_object().id].remove(follow.get_actor().id)
-
-    @track_call
-    def new_following(self, as_actor: "Person", follow: "Follow") -> None:
-        print(f"new following {follow!r}")
-        self.FOLLOWING[as_actor.id].append(follow.get_object().id)
-
-    @track_call
-    def undo_new_following(self, as_actor: "Person", follow: "Follow") -> None:
-        self.FOLLOWING[as_actor.id].remove(follow.get_object().id)
-
-    def followers(self, as_actor: "Person") -> List[str]:
-        return self.FOLLOWERS[as_actor.id]
-
-    def following(self, as_actor: "Person") -> List[str]:
-        return self.FOLLOWING[as_actor.id]
-
-    @track_call
-    def post_to_remote_inbox(
-        self, as_actor: "Person", payload_encoded: str, recp: str
-    ) -> None:
-        payload = json.loads(payload_encoded)
-        print(f"post_to_remote_inbox {payload} {recp}")
-        act = parse_activity(payload)
-        as_actor = parse_activity(self.fetch_iri(recp.replace("/inbox", "")))
-        act.process_from_inbox(as_actor)
-
-    def is_from_outbox(self, activity: "BaseActivity") -> bool:
-        # return as_actor.id == activity.get_actor().id
-        return True  # FIXME(tsileo): implement this
-
-    def inbox_like(self, activity: "Like") -> None:
-        pass
-
-    def inbox_undo_like(self, activity: "Like") -> None:
-        pass
-
-    def outbox_like(self, activity: "Like") -> None:
-        pass
-
-    def outbox_undo_like(self, activity: "Like") -> None:
-        pass
-
-    def inbox_announce(self, activity: "Announce") -> None:
-        pass
-
-    def inbox_undo_announce(self, activity: "Announce") -> None:
-        pass
-
-    def outbox_announce(self, activity: "Announce") -> None:
-        pass
-
-    def outbox_undo_announce(self, activity: "Announce") -> None:
-        pass
-
-    def inbox_delete(self, activity: "Delete") -> None:
-        pass
-
-    def outbox_delete(self, activity: "Delete") -> None:
-        pass
-
-    def inbox_update(self, activity: "Update") -> None:
-        pass
-
-    def outbox_update(self, activity: "Update") -> None:
-        pass
-
-    @track_call
-    def inbox_create(self, as_actor: "Person", activity: "Create") -> None:
-        pass
-
-    @track_call
-    def outbox_create(self, as_actor: "Person", activity: "Create") -> None:
-        pass
-
-
 class _ActivityMeta(type):
     """Metaclass for keeping track of subclass."""
 
@@ -377,6 +147,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     )  # Most of the object requires an actor, so this flag in on by default
 
     def __init__(self, **kwargs) -> None:  # noqa: C901
+        if not self.ACTIVITY_TYPE:
+            raise Error("should never happen")
+
         if kwargs.get("type") and kwargs.pop("type") != self.ACTIVITY_TYPE.value:
             raise UnexpectedActivityTypeError(
                 f"Expect the type to be {self.ACTIVITY_TYPE.value!r}"
@@ -387,7 +160,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         logger.debug(f"initializing a {self.ACTIVITY_TYPE.value} activity: {kwargs!r}")
 
         # A place to set ephemeral data
-        self.__ctx = {}
+        self.__ctx: Any = {}
 
         # The id may not be present for new activities
         if "id" in kwargs:
@@ -512,6 +285,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             raise BadActivityError(f'invalid "actor" field: {obj!r}')
 
     def _validate_person(self, obj: ObjectOrIDType) -> str:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         obj_id = self._actor_id(obj)
         try:
             actor = BACKEND.fetch_iri(obj_id)
@@ -525,6 +301,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
     def get_object(self) -> "BaseActivity":
         """Returns the object as a BaseActivity instance."""
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         if self.__obj:
             return self.__obj
         if isinstance(self._data["object"], dict):
@@ -566,7 +345,10 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         return data
 
-    def get_actor(self) -> "BaseActivity":
+    def get_actor(self) -> "Person":
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         # FIXME(tsileo): cache the actor (same way as get_object)
         actor = self._data.get("actor")
         if not actor and self.ACTOR_REQUIRED:
@@ -575,6 +357,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 actor = str(self._data.get("attributedTo"))
             else:
                 raise BadActivityError(f"failed to fetch actor: {self._data!r}")
+
+        if not isinstance(actor, (str, dict)):
+            raise BadActivityError(f"invalid actor: {self._data!r}")
 
         actor_id = self._actor_id(actor)
         return Person(**BACKEND.fetch_iri(actor_id))
@@ -600,11 +385,14 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     def _process_from_inbox(self, as_actor: "Person") -> None:
         raise NotImplementedError
 
-    def _undo_inbox(self) -> None:
+    def _undo_inbox(self, as_actor: "Person") -> None:
         raise NotImplementedError
 
     def process_from_inbox(self, as_actor: "Person") -> None:
         """Process the message posted to `as_actor` inbox."""
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         logger.debug(f"calling main process from inbox hook for {self}")
         actor = self.get_actor()
 
@@ -637,6 +425,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             logger.debug("process from inbox hook not implemented")
 
     def post_to_outbox(self) -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         logger.debug(f"calling main post to outbox hook for {self}")
 
         # Assign create a random ID
@@ -671,6 +462,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         return []
 
     def recipients(self) -> List[str]:  # noqa: C901
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         recipients = self._recipients()
         actor_id = self.get_actor().id
 
@@ -779,10 +573,13 @@ class Follow(BaseActivity):
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
         """Receiving a Follow should trigger an Accept."""
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         accept = self.build_accept()
         accept.post_to_outbox()
 
-        BACKEND.new_follower(self.get_object(), self)
+        BACKEND.new_follower(as_actor, self)
 
     def _post_to_outbox(
         self,
@@ -794,10 +591,16 @@ class Follow(BaseActivity):
         # XXX The new_following event will be triggered by Accept
         pass
 
-    def _undo_inbox(self) -> None:
-        BACKEND.undo_new_follower(self.get_object(), self)
+    def _undo_inbox(self, as_actor: 'Person') -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.undo_new_follower(as_actor, self)
 
     def _undo_outbox(self) -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         BACKEND.undo_new_following(self.get_actor(), self)
 
     def build_accept(self) -> BaseActivity:
@@ -821,7 +624,12 @@ class Accept(BaseActivity):
         pass
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
-        BACKEND.new_following(as_actor, self.get_object())
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        o = self.get_object()
+        if isinstance(o, Follow):
+            BACKEND.new_following(as_actor, o)
 
 
 class Undo(BaseActivity):
@@ -856,13 +664,15 @@ class Undo(BaseActivity):
         # DB.inbox.update_one({'remote_id': obj.id}, {'$set': {'meta.undo': True}})
 
         try:
-            obj._undo_inbox()
+            obj._undo_inbox(as_actor)
         except NotImplementedError:
             pass
 
     def _pre_post_to_outbox(self) -> None:
         """Ensures an Undo activity references an activity owned by the instance."""
-        # ABC
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         if not BACKEND.is_from_outbox(self):
             raise NotFromOutboxError(f"object {self!r} is not owned by this instance")
 
@@ -902,9 +712,9 @@ class Like(BaseActivity):
         # ABC
         self.inbox_like(self)
 
-    def _undo_inbox(self) -> None:
+    def _undo_inbox(self, as_actor: "Person") -> None:
         # ABC
-        self.inbox_undo_like(self)
+        self.inbox_undo_like(as_actor, self)
 
     def _post_to_outbox(
         self,
@@ -955,9 +765,11 @@ class Announce(BaseActivity):
         # ABC
         self.inbox_announce(self)
 
-    def _undo_inbox(self) -> None:
-        # ABC
-        self.inbox_undo_annnounce(self)
+    def _undo_inbox(self, as_actor: "Person") -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.inbox_undo_annnounce(as_actor, self)
 
     def _post_to_outbox(
         self,
@@ -970,8 +782,10 @@ class Announce(BaseActivity):
         self.outbox_announce(self)
 
     def _undo_outbox(self) -> None:
-        # ABC
-        self.outbox_undo_announce(self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.outbox_undo_announce(self)
 
     def build_undo(self) -> BaseActivity:
         return Undo(object=self.to_dict(embed=True))
@@ -983,6 +797,9 @@ class Delete(BaseActivity):
     OBJECT_REQUIRED = True
 
     def _get_actual_object(self) -> BaseActivity:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         # FIXME(tsileo): overrides get_object instead?
         obj = self.get_object()
         if obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
@@ -1001,14 +818,19 @@ class Delete(BaseActivity):
             raise BadActivityError(f"{actor!r} cannot delete {obj!r}")
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
-        # ABC
-        self.inbox_delete(self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.inbox_delete(as_actor, self)
         # FIXME(tsileo): handle the delete_threads here?
 
     def _pre_post_to_outbox(self) -> None:
         """Ensures the Delete activity references a activity from the outbox (i.e. owned by the instance)."""
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         obj = self._get_actual_object()
-        # ABC
+
         if not BACKEND.is_from_outbox(self):
             raise NotFromOutboxError(
                 f'object {obj["id"]} is not owned by this instance'
@@ -1039,12 +861,16 @@ class Update(BaseActivity):
             raise BadActivityError(f"{actor!r} cannot update {obj!r}")
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
-        # ABC
-        self.inbox_update(self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.inbox_update(as_actor, self)
 
     def _pre_post_to_outbox(self) -> None:
-        # ABC
-        if not self.is_form_outbox(self):
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        if not BACKEND.is_from_outbox(self):
             raise NotFromOutboxError(f"object {self!r} is not owned by this instance")
 
     def _post_to_outbox(
@@ -1054,8 +880,10 @@ class Update(BaseActivity):
         activity: ObjectType,
         recipients: List[str],
     ) -> None:
-        # ABC
-        self.outbox_update(self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.outbox_update(as_actor, self)
 
 
 class Create(BaseActivity):
@@ -1094,6 +922,9 @@ class Create(BaseActivity):
         return recipients
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         BACKEND.inbox_create(as_actor, self)
 
     def _post_to_outbox(
@@ -1103,7 +934,10 @@ class Create(BaseActivity):
         activity: ObjectType,
         recipients: List[str],
     ) -> None:
-        BACKEND.outbox_create(self.get_actor(), self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.outbox_create(as_actor, self)
 
 
 class Tombstone(BaseActivity):

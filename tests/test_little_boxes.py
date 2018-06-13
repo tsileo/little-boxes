@@ -1,6 +1,7 @@
 import logging
 
 from little_boxes import activitypub as ap
+from test_backend import InMemBackend
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -11,7 +12,7 @@ def _assert_eq(val, other):
 
 
 def test_little_boxes_follow():
-    back = ap.BaseBackend()
+    back = InMemBackend()
     ap.use_backend(back)
 
     me = back.setup_actor("Thomas", "tom")

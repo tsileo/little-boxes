@@ -22,7 +22,7 @@ class Error(Exception):
         self.payload = payload
 
     def to_dict(self) -> Dict[str, Any]:
-        rv = dict(self.payload or ())
+        rv = dict(self.payload or {})
         rv["message"] = self.message
         return rv
 

@@ -4,6 +4,7 @@ key_*.pem
 .coverage
 coverage.xml
 *.egg-info
+dist/
 .pytest_cache
 .mypy_cache/
 __pycache__/
