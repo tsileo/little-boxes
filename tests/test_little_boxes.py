@@ -667,3 +667,62 @@ def test_little_boxes_follow_and_new_create_note_and_announce():
             lambda _announce: _assert_eq(_announce.id, announce.id),
         ),
     )
+
+    return back, announce
+
+
+def test_little_boxes_follow_and_new_create_note_and_like_and_undo_announce():
+    back, announce = test_little_boxes_follow_and_new_create_note_and_announce()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(me)
+
+    undo = announce.build_undo()
+    outbox.post(undo)
+
+    back.assert_called_methods(
+        me,
+        (
+            "an Undo activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, undo.id),
+        ),
+        (
+            '"outbox_undo_announce" hook is called',
+            "outbox_undo_announce",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda _announce: _assert_eq(_announce.id, undo.get_object().id),
+        ),
+        (
+            "the Undo activity is posted to the original recipients",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, other.inbox),
+        ),
+    )
+
+    back.assert_called_methods(
+        other,
+        (
+            "receiving the Undo, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda remote_actor: _assert_eq(remote_actor, me.id),
+        ),
+        (
+            "receiving the Undo activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, undo.id),
+        ),
+        (
+            '"inbox_undo_announce" hook is called',
+            "inbox_undo_announce",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda _announce: _assert_eq(_announce.id, undo.get_object().id),
+        ),
+    )

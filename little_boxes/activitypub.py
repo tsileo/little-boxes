@@ -779,7 +779,7 @@ class Announce(BaseActivity):
         if BACKEND is None:
             raise UninitializedBackendError
 
-        BACKEND.inbox_undo_annnounce(as_actor, self)
+        BACKEND.inbox_undo_announce(as_actor, self)
 
     def _post_to_outbox(
         self,
