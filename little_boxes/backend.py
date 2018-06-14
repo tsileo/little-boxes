@@ -83,7 +83,9 @@ class Backend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def inbox_undo_announce(self, as_actor: "ap.Person", activity: "ap.Announce") -> None:
+    def inbox_undo_announce(
+        self, as_actor: "ap.Person", activity: "ap.Announce"
+    ) -> None:
         pass
 
     @abc.abstractmethod

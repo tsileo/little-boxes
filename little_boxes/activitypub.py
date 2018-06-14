@@ -797,10 +797,7 @@ class Announce(BaseActivity):
         BACKEND.outbox_undo_announce(as_actor, self)
 
     def build_undo(self) -> BaseActivity:
-        return Undo(
-            actor=self.get_actor().id,
-            object=self.to_dict(embed=True),
-        )
+        return Undo(actor=self.get_actor().id, object=self.to_dict(embed=True))
 
 
 class Delete(BaseActivity):
