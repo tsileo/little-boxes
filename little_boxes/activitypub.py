@@ -378,7 +378,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     ) -> None:
         raise NotImplementedError
 
-    def _undo_outbox(self) -> None:
+    def _undo_outbox(self, as_actor: "Person") -> None:
         raise NotImplementedError
 
     def _pre_process_from_inbox(self, as_actor: "Person") -> None:
@@ -599,11 +599,11 @@ class Follow(BaseActivity):
 
         BACKEND.undo_new_follower(as_actor, self)
 
-    def _undo_outbox(self) -> None:
+    def _undo_outbox(self, as_actor: "Person") -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
-        BACKEND.undo_new_following(self.get_actor(), self)
+        BACKEND.undo_new_following(as_actor, self)
 
     def build_accept(self) -> BaseActivity:
         return self._build_reply(ActivityType.ACCEPT)
@@ -694,7 +694,7 @@ class Undo(BaseActivity):
         # DB.outbox.update_one({'remote_id': obj.id}, {'$set': {'meta.undo': True}})
 
         try:
-            obj._undo_outbox()
+            obj._undo_outbox(as_actor)
             logger.debug(f"_undo_outbox called for {obj}")
         except NotImplementedError:
             logger.debug(f"_undo_outbox not implemented for {obj}")
@@ -711,12 +711,16 @@ class Like(BaseActivity):
         return [self.get_object().get_actor().id]
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
-        # ABC
-        self.inbox_like(self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.inbox_like(as_actor, self)
 
     def _undo_inbox(self, as_actor: "Person") -> None:
-        # ABC
-        self.inbox_undo_like(as_actor, self)
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.inbox_undo_like(as_actor, self)
 
     def _post_to_outbox(
         self,
@@ -725,12 +729,16 @@ class Like(BaseActivity):
         activity: ObjectType,
         recipients: List[str],
     ):
-        # ABC
-        self.outbox_like(self)
+        if BACKEND is None:
+            raise UninitializedBackendError
 
-    def _undo_outbox(self) -> None:
-        # ABC
-        self.outbox_undo_like(self)
+        BACKEND.outbox_like(as_actor, self)
+
+    def _undo_outbox(self, as_actor: "Person") -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        BACKEND.outbox_undo_like(as_actor, self)
 
     def build_undo(self) -> BaseActivity:
         return Undo(
@@ -783,11 +791,11 @@ class Announce(BaseActivity):
         # ABC
         self.outbox_announce(self)
 
-    def _undo_outbox(self) -> None:
+    def _undo_outbox(self, as_actor: "Person") -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
-        BACKEND.outbox_undo_announce(self)
+        BACKEND.outbox_undo_announce(as_actor, self)
 
     def build_undo(self) -> BaseActivity:
         return Undo(object=self.to_dict(embed=True))

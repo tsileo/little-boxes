@@ -195,16 +195,20 @@ class InMemBackend(Backend):
         # return as_actor.id == activity.get_actor().id
         return True  # FIXME(tsileo): implement this
 
-    def inbox_like(self, activity: ap.Like) -> None:
+    @track_call
+    def inbox_like(self, as_actor: ap.Person, activity: ap.Like) -> None:
         pass
 
-    def inbox_undo_like(self, activity: ap.Like) -> None:
+    @track_call
+    def inbox_undo_like(self, as_actor: ap.Person, activity: ap.Like) -> None:
         pass
 
-    def outbox_like(self, activity: ap.Like) -> None:
+    @track_call
+    def outbox_like(self, as_actor: ap.Person, activity: ap.Like) -> None:
         pass
 
-    def outbox_undo_like(self, activity: ap.Like) -> None:
+    @track_call
+    def outbox_undo_like(self, as_actor: ap.Person, activity: ap.Like) -> None:
         pass
 
     def inbox_announce(self, activity: ap.Announce) -> None:

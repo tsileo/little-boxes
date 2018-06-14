@@ -494,3 +494,60 @@ def test_little_boxes_follow_and_new_create_note_and_delete():
             lambda _delete: _assert_eq(_delete.id, delete.id),
         ),
     )
+
+
+def test_little_boxes_follow_and_new_create_note_and_like():
+    back, create = test_little_boxes_follow_and_new_create_note()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(me)
+
+    like = ap.Like(actor=me.id, object=create.get_object().id)
+    outbox.post(like)
+
+    back.assert_called_methods(
+        me,
+        (
+            "a Like activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, like.id),
+        ),
+        (
+            '"outbox_create" hook is called',
+            "outbox_like",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda _like: _assert_eq(_like.id, like.id),
+        ),
+        (
+            "the Delete activity is posted to the note creator",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, other.inbox),
+        ),
+    )
+
+    back.assert_called_methods(
+        other,
+        (
+            "receiving the Like, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda remote_actor: _assert_eq(remote_actor, me.id),
+        ),
+        (
+            "receiving the Delete activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, like.id),
+        ),
+        (
+            '"inbox_like" hook is called',
+            "inbox_like",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda _like: _assert_eq(_like.id, like.id),
+        ),
+    )
