@@ -144,7 +144,7 @@ class InMemBackend(Backend):
 
     def activity_url(self, obj_id: str) -> str:
         # from the random hex ID
-        return f"todo/{obj_id}"
+        return f"https://todo/{obj_id}"
 
     @track_call
     def outbox_new(self, as_actor: ap.Person, activity: ap.BaseActivity) -> None:
@@ -211,16 +211,20 @@ class InMemBackend(Backend):
     def outbox_undo_like(self, as_actor: ap.Person, activity: ap.Like) -> None:
         pass
 
-    def inbox_announce(self, activity: ap.Announce) -> None:
+    @track_call
+    def inbox_announce(self, as_actor: ap.Person, activity: ap.Announce) -> None:
         pass
 
-    def inbox_undo_announce(self, activity: ap.Announce) -> None:
+    @track_call
+    def inbox_undo_announce(self, as_actor: ap.Person, activity: ap.Announce) -> None:
         pass
 
-    def outbox_announce(self, activity: ap.Announce) -> None:
+    @track_call
+    def outbox_announce(self, as_actor: ap.Person, activity: ap.Announce) -> None:
         pass
 
-    def outbox_undo_announce(self, activity: ap.Announce) -> None:
+    @track_call
+    def outbox_undo_announce(self, as_actor: ap.Person, activity: ap.Announce) -> None:
         pass
 
     @track_call

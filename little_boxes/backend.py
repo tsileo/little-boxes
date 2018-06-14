@@ -77,3 +77,21 @@ class Backend(abc.ABC):
     @abc.abstractmethod
     def outbox_undo_like(self, as_actor: "ap.Person", activity: "ap.Like") -> None:
         pass
+
+    @abc.abstractmethod
+    def inbox_announce(self, as_actor: "ap.Person", activity: "ap.Announce") -> None:
+        pass
+
+    @abc.abstractmethod
+    def inbox_undo_announce(self, as_actor: "ap.Person", activity: "ap.Announce") -> None:
+        pass
+
+    @abc.abstractmethod
+    def outbox_announce(self, as_actor: "ap.Person", activity: "ap.Announce") -> None:
+        pass
+
+    @abc.abstractmethod
+    def outbox_undo_announce(
+        self, as_actor: "ap.Person", activity: "ap.Announce"
+    ) -> None:
+        pass

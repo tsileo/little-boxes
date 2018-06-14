@@ -754,15 +754,16 @@ class Announce(BaseActivity):
     ACTOR_REQUIRED = True
 
     def _recipients(self) -> List[str]:
-        recipients = []
+        recipients = [self.get_object().get_actor().id]
 
         for field in ["to", "cc"]:
             if field in self._data:
                 recipients.extend(_to_list(self._data[field]))
 
-        return recipients
+        return list(set(recipients))
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
+        # XXX(tsileo): Mastodon will try to send Announce for OStatus only acitivities which we cannot parse
         if isinstance(self._data["object"], str) and not self._data[
             "object"
         ].startswith("http"):
@@ -772,8 +773,7 @@ class Announce(BaseActivity):
             )
             return
 
-        # ABC
-        self.inbox_announce(self)
+        BACKEND.inbox_announce(as_actor, self)
 
     def _undo_inbox(self, as_actor: "Person") -> None:
         if BACKEND is None:
@@ -788,8 +788,7 @@ class Announce(BaseActivity):
         activity: ObjectType,
         recipients: List[str],
     ) -> None:
-        # ABC
-        self.outbox_announce(self)
+        BACKEND.outbox_announce(as_actor, self)
 
     def _undo_outbox(self, as_actor: "Person") -> None:
         if BACKEND is None:

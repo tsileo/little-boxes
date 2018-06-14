@@ -539,7 +539,7 @@ def test_little_boxes_follow_and_new_create_note_and_like():
             lambda remote_actor: _assert_eq(remote_actor, me.id),
         ),
         (
-            "receiving the Delete activity",
+            "receiving the Like activity",
             "inbox_new",
             lambda as_actor: _assert_eq(as_actor.id, other.id),
             lambda activity: _assert_eq(activity.id, like.id),
@@ -549,5 +549,62 @@ def test_little_boxes_follow_and_new_create_note_and_like():
             "inbox_like",
             lambda as_actor: _assert_eq(as_actor.id, other.id),
             lambda _like: _assert_eq(_like.id, like.id),
+        ),
+    )
+
+
+def test_little_boxes_follow_and_new_create_note_and_announce():
+    back, create = test_little_boxes_follow_and_new_create_note()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(me)
+
+    announce = ap.Announce(actor=me.id, object=create.get_object().id)
+    outbox.post(announce)
+
+    back.assert_called_methods(
+        me,
+        (
+            "an Announce activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda activity: _assert_eq(activity.id, announce.id),
+        ),
+        (
+            '"outbox_announce" hook is called',
+            "outbox_announce",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda _announce: _assert_eq(_announce.id, announce.id),
+        ),
+        (
+            "the Announce activity is posted to the note creator",
+            "post_to_remote_inbox",
+            lambda as_actor: _assert_eq(as_actor.id, me.id),
+            lambda payload: None,
+            lambda recipient: _assert_eq(recipient, other.inbox),
+        ),
+    )
+
+    back.assert_called_methods(
+        other,
+        (
+            "receiving the Announce, ensure we check the actor is not blocked",
+            "outbox_is_blocked",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda remote_actor: _assert_eq(remote_actor, me.id),
+        ),
+        (
+            "receiving the Announce activity",
+            "inbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, announce.id),
+        ),
+        (
+            '"inbox_announce" hook is called',
+            "inbox_announce",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda _announce: _assert_eq(_announce.id, announce.id),
         ),
     )
