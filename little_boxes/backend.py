@@ -63,6 +63,10 @@ class Backend(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def outbox_update(self, as_actor: "ap.Person", activity: "ap.Update") -> None:
+        pass
+
+    @abc.abstractmethod
     def inbox_like(self, as_actor: "ap.Person", activity: "ap.Like") -> None:
         pass
 

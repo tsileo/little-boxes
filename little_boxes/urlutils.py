@@ -28,10 +28,16 @@ def is_url_valid(url: str) -> bool:
         return False
 
     try:
-        ip_address = socket.getaddrinfo(parsed.hostname, parsed.port or 80)[0][4][0]
-    except socket.gaierror:
-        logger.exception(f"failed to lookup url {url}")
-        return False
+        ip_address = ipaddress.ip_address(parsed.hostname)
+    except ValueError:
+        try:
+            ip_address = socket.getaddrinfo(parsed.hostname, parsed.port or 80)[0][4][0]
+            logger.debug(f"dns lookup: {parsed.hostname} -> {ip_address}")
+        except socket.gaierror:
+            logger.exception(f"failed to lookup url {url}")
+            return False
+
+    logger.debug(f"{ip_address}")
 
     if ipaddress.ip_address(ip_address).is_private:
         logger.info(f"rejecting private URL {url}")
@@ -41,6 +47,7 @@ def is_url_valid(url: str) -> bool:
 
 
 def check_url(url: str) -> None:
+    logger.debug(f"check_url {url}")
     if not is_url_valid(url):
         raise InvalidURLError(f'"{url}" is invalid')
 

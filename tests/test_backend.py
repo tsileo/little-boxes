@@ -235,10 +235,12 @@ class InMemBackend(Backend):
     def outbox_delete(self, as_actor: ap.Person, activity: ap.Delete) -> None:
         pass
 
+    @track_call
     def inbox_update(self, as_actor: ap.Person, activity: ap.Update) -> None:
         pass
 
-    def outbox_update(self, activity: ap.Update) -> None:
+    @track_call
+    def outbox_update(self, as_actor: ap.Person, activity: ap.Update) -> None:
         pass
 
     @track_call

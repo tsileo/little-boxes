@@ -12,7 +12,7 @@ from .errors import NotFromOutboxError
 
 # from .errors import ActivityNotFoundError
 # from .urlutils import check_url
-from .utils import parse_collection
+from .collection import parse_collection
 from .backend import Backend
 
 from typing import List
