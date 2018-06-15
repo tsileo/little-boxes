@@ -1,7 +1,7 @@
 """Errors raised by this package."""
-from typing import Optional
-from typing import Dict
 from typing import Any
+from typing import Dict
+from typing import Optional
 
 
 class Error(Exception):

@@ -1,10 +1,12 @@
-from unittest import mock
-import logging
 import json
-
-from little_boxes import webfinger
+import logging
+from unittest import mock
 
 import httpretty
+import pytest
+
+from little_boxes import urlutils
+from little_boxes import webfinger
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -48,3 +50,8 @@ def test_webfinger(_):
         webfinger.get_remote_follow_template("@dev@microblog.pub")
         == "https://microblog.pub/authorize_follow?profile={uri}"
     )
+
+
+def test_webfinger_invalid_url():
+    with pytest.raises(urlutils.InvalidURLError):
+        data = webfinger.webfinger("@dev@localhost:8080")

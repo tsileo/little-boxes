@@ -1,11 +1,11 @@
 import binascii
-import os
 import json
-from typing import Optional
+import os
 from typing import List
+from typing import Optional
 
-from little_boxes.backend import Backend
 import little_boxes.activitypub as ap
+from little_boxes.backend import Backend
 
 
 def track_call(f):

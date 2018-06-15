@@ -1,14 +1,14 @@
 import re
+from typing import Dict
 from typing import List
 from typing import Tuple
-from typing import Dict
 
 from bleach.linkifier import Linker
 from markdown import markdown
 
-from .webfinger import get_actor_url
 from .activitypub import BACKEND
 from .activitypub import UninitializedBackendError
+from .webfinger import get_actor_url
 
 
 def _set_attrs(attrs, new=False):

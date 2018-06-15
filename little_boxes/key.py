@@ -1,6 +1,6 @@
-from typing import Optional
 from typing import Any
 from typing import Dict
+from typing import Optional
 
 from Crypto.PublicKey import RSA
 

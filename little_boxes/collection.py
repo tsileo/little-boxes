@@ -1,10 +1,9 @@
 """Contains some ActivityPub related utils."""
-from typing import Optional
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
-from typing import Any
-
+from typing import Optional
 
 from .errors import RecursionLimitExceededError
 from .errors import UnexpectedActivityTypeError

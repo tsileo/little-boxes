@@ -1,14 +1,13 @@
-from pyld import jsonld
-import hashlib
-from datetime import datetime
-
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA256
 import base64
-
+import hashlib
 import typing
+from datetime import datetime
 from typing import Any
 from typing import Dict
+
+from Crypto.Hash import SHA256
+from Crypto.Signature import PKCS1_v1_5
+from pyld import jsonld
 
 if typing.TYPE_CHECKING:
     from .key import Key  # noqa: type checking

@@ -1,27 +1,22 @@
 """Core ActivityPub classes."""
-import logging
 import json
+import logging
 import weakref
 from datetime import datetime
 from enum import Enum
-
-from .errors import BadActivityError
-from .errors import UnexpectedActivityTypeError
-from .errors import Error
-from .errors import NotFromOutboxError
-
-# from .errors import ActivityNotFoundError
-# from .urlutils import check_url
-from .collection import parse_collection
-from .backend import Backend
-
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Dict
-from typing import Any
-from typing import Union
 from typing import Type
+from typing import Union
 
+from .backend import Backend
+from .collection import parse_collection
+from .errors import BadActivityError
+from .errors import Error
+from .errors import NotFromOutboxError
+from .errors import UnexpectedActivityTypeError
 
 logger = logging.getLogger(__name__)
 
