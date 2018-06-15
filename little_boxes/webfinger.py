@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
-from typing import Dict, Any
+from typing import Dict
+from typing import Any
 from typing import Optional
 import logging
 
