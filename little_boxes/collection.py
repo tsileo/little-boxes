@@ -1,4 +1,4 @@
-"""Contains some ActivityPub related utils."""
+"""Collection releated utils."""
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -9,7 +9,7 @@ from .errors import RecursionLimitExceededError
 from .errors import UnexpectedActivityTypeError
 
 
-def parse_collection(
+def parse_collection(  # noqa: C901
     payload: Optional[Dict[str, Any]] = None,
     url: Optional[str] = None,
     level: int = 0,
@@ -34,13 +34,22 @@ def parse_collection(
         if "items" in payload:
             return payload["items"]
         if "first" in payload:
-            if "orderedItems" in payload["first"]:
-                out.extend(payload["first"]["orderedItems"])
-            if "items" in payload["first"]:
-                out.extend(payload["first"]["items"])
-            n = payload["first"].get("next")
-            if n:
-                out.extend(parse_collection(url=n, level=level + 1, fetcher=fetcher))
+            if isinstance(payload["first"], str):
+                out.extend(
+                    parse_collection(
+                        url=payload["first"], level=level + 1, fetcher=fetcher
+                    )
+                )
+            else:
+                if "orderedItems" in payload["first"]:
+                    out.extend(payload["first"]["orderedItems"])
+                if "items" in payload["first"]:
+                    out.extend(payload["first"]["items"])
+                n = payload["first"].get("next")
+                if n:
+                    out.extend(
+                        parse_collection(url=n, level=level + 1, fetcher=fetcher)
+                    )
         return out
 
     while payload:

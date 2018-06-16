@@ -1,11 +1,28 @@
 import abc
 import typing
+from typing import Any
+from typing import Dict
+
+import requests
+
+from .__version__ import __version__
 
 if typing.TYPE_CHECKING:
     from little_boxes import activitypub as ap  # noqa: type checking
 
 
 class Backend(abc.ABC):
+    def user_agent(self) -> str:
+        return f"Little Boxes {__version__} (+http://github.com/tsileo/little-boxes)"
+
+    def fetch_json(self, url: str) -> Dict[str, Any]:
+        resp = requests.get(
+            url, headers={"User-Agent": self.user_agent(), "Accept": "application/json"}
+        )
+        resp.raise_for_status()
+
+        return resp.json()
+
     @abc.abstractmethod
     def base_url(self) -> str:
         pass
