@@ -56,10 +56,10 @@ def _doc_hash(doc):
     return h.hexdigest()
 
 
-def verify_signature(doc, pubkey):
+def verify_signature(doc, key: "Key"):
     to_be_signed = _options_hash(doc) + _doc_hash(doc)
     signature = doc["signature"]["signatureValue"]
-    signer = PKCS1_v1_5.new(pubkey)
+    signer = PKCS1_v1_5.new(key.pubkey or key.privkey)
     digest = SHA256.new()
     digest.update(to_be_signed.encode("utf-8"))
     return signer.verify(digest, base64.b64decode(signature))
