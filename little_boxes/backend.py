@@ -6,6 +6,7 @@ import typing
 import requests
 
 from .__version__ import __version__
+from .errors import ActivityNotFoundError
 
 if typing.TYPE_CHECKING:
     from little_boxes import activitypub as ap  # noqa: type checking
@@ -42,9 +43,21 @@ class Backend(abc.ABC):
     def base_url(self) -> str:
         pass  # pragma: no cover
 
-    @abc.abstractmethod
-    def fetch_iri(self, iri: str) -> "ap.ObjectType":
-        pass  # pragma: no cover
+    def fetch_iri(self, iri: str, **kwargs) -> "ap.ObjectType":  # pragma: no cover
+        resp = requests.get(
+            iri,
+            headers={
+                "User-Agent": self.user_agent(),
+                "Accept": "application/activity+json",
+            },
+            **kwargs,
+        )
+        if resp.status_code == 404:
+            raise ActivityNotFoundError(f"{iri} is not found")
+
+        resp.raise_for_status()
+
+        return resp.json()
 
     @abc.abstractmethod
     def inbox_check_duplicate(self, as_actor: "ap.Person", iri: str) -> bool:
