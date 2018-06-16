@@ -55,7 +55,7 @@ def _verify_h(signed_string, signature, pubkey):
 
 def _body_digest(body: str) -> str:
     h = hashlib.new("sha256")
-    h.update(body)
+    h.update(body)  # type: ignore
     return "SHA-256=" + base64.b64encode(h.digest()).decode("utf-8")
 
 

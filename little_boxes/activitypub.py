@@ -367,7 +367,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         actor_id = self._actor_id(actor)
         return Person(**BACKEND.fetch_iri(actor_id))
 
-    def _pre_post_to_outbox(self) -> None:
+    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
         raise NotImplementedError
 
     def _post_to_outbox(
@@ -407,7 +407,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             )
             return
 
-        if BACKEND.inbox_get_by_iri(as_actor, self.id):
+        if BACKEND.inbox_check_duplicate(as_actor, self.id):
             # The activity is already in the inbox
             logger.info(f"received duplicate activity {self}, dropping it")
             return
@@ -438,7 +438,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         self.outbox_set_id(BACKEND.activity_url(obj_id), obj_id)
 
         try:
-            self._pre_post_to_outbox()
+            self._pre_post_to_outbox(self.get_actor())
             logger.debug(f"called pre post to outbox hook")
         except NotImplementedError:
             logger.debug("pre post to outbox hook not implemented")
@@ -671,12 +671,12 @@ class Undo(BaseActivity):
         except NotImplementedError:
             pass
 
-    def _pre_post_to_outbox(self) -> None:
+    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
         """Ensures an Undo activity references an activity owned by the instance."""
         if BACKEND is None:
             raise UninitializedBackendError
 
-        if not BACKEND.is_from_outbox(self):
+        if not BACKEND.is_from_outbox(as_actor, self):
             raise NotFromOutboxError(f"object {self!r} is not owned by this instance")
 
     def _post_to_outbox(
@@ -774,6 +774,9 @@ class Announce(BaseActivity):
             )
             return
 
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         BACKEND.inbox_announce(as_actor, self)
 
     def _undo_inbox(self, as_actor: "Person") -> None:
@@ -789,6 +792,9 @@ class Announce(BaseActivity):
         activity: ObjectType,
         recipients: List[str],
     ) -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
         BACKEND.outbox_announce(as_actor, self)
 
     def _undo_outbox(self, as_actor: "Person") -> None:
@@ -834,14 +840,14 @@ class Delete(BaseActivity):
         BACKEND.inbox_delete(as_actor, self)
         # FIXME(tsileo): handle the delete_threads here?
 
-    def _pre_post_to_outbox(self) -> None:
+    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
         """Ensures the Delete activity references a activity from the outbox (i.e. owned by the instance)."""
         if BACKEND is None:
             raise UninitializedBackendError
 
         obj = self._get_actual_object()
 
-        if not BACKEND.is_from_outbox(self):
+        if not BACKEND.is_from_outbox(as_actor, self):
             raise NotFromOutboxError(
                 f'object {obj["id"]} is not owned by this instance'
             )
@@ -878,11 +884,11 @@ class Update(BaseActivity):
 
         BACKEND.inbox_update(as_actor, self)
 
-    def _pre_post_to_outbox(self) -> None:
+    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
-        if not BACKEND.is_from_outbox(self):
+        if not BACKEND.is_from_outbox(as_actor, self):
             raise NotFromOutboxError(f"object {self!r} is not owned by this instance")
 
     def _post_to_outbox(

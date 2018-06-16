@@ -67,10 +67,6 @@ class InMemBackend(Backend):
 
         return calls
 
-    def random_object_id(self) -> str:
-        """Generates a random object ID."""
-        return binascii.hexlify(os.urandom(8)).decode("utf-8")
-
     def setup_actor(self, name, pusername):
         """Create a new actor in this backend."""
         p = ap.Person(
@@ -126,7 +122,7 @@ class InMemBackend(Backend):
                 return True
         return False
 
-    def inbox_get_by_iri(
+    def inbox_check_duplicate(
         self, as_actor: ap.Person, iri: str
     ) -> Optional[ap.BaseActivity]:
         for activity in self.DB[as_actor.id]["inbox"]:
@@ -193,10 +189,6 @@ class InMemBackend(Backend):
         act = ap.parse_activity(payload)
         as_actor = ap.parse_activity(self.fetch_iri(recp.replace("/inbox", "")))
         act.process_from_inbox(as_actor)
-
-    def is_from_outbox(self, activity: ap.BaseActivity) -> bool:
-        # return as_actor.id == activity.get_actor().id
-        return True  # FIXME(tsileo): implement this
 
     @track_call
     def inbox_like(self, as_actor: ap.Person, activity: ap.Like) -> None:

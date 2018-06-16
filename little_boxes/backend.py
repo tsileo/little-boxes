@@ -1,5 +1,7 @@
 import abc
 import typing
+import os
+import binascii
 
 import requests
 
@@ -13,6 +15,10 @@ class Backend(abc.ABC):
     def user_agent(self) -> str:
         return f"Little Boxes {__version__} (+http://github.com/tsileo/little-boxes)"
 
+    def random_object_id(self) -> str:
+        """Generates a random object ID."""
+        return binascii.hexlify(os.urandom(8)).decode("utf-8")
+
     def fetch_json(self, url: str, **kwargs):
         resp = requests.get(
             url,
@@ -21,12 +27,25 @@ class Backend(abc.ABC):
         )
         return resp
 
+    def is_from_outbox(self, as_actor: "ap.Person", activity: "ap.BaseActivity") -> bool:
+        return activity.get_actor().id == as_actor.id
+
+    @abc.abstractmethod
+    def post_to_remote_inbox(
+        self, as_actor: "ap.Person", payload_encoded: str, recp: str
+    ) -> None:
+        pass  # pragma: no cover
+
     @abc.abstractmethod
     def base_url(self) -> str:
         pass  # pragma: no cover
 
     @abc.abstractmethod
     def fetch_iri(self, iri: str) -> "ap.ObjectType":
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def inbox_check_duplicate(self, as_actor: "ap.Person", iri: str) -> bool:
         pass  # pragma: no cover
 
     @abc.abstractmethod
