@@ -1,7 +1,7 @@
 import abc
-import typing
-import os
 import binascii
+import os
+import typing
 
 import requests
 
@@ -27,7 +27,9 @@ class Backend(abc.ABC):
         )
         return resp
 
-    def is_from_outbox(self, as_actor: "ap.Person", activity: "ap.BaseActivity") -> bool:
+    def is_from_outbox(
+        self, as_actor: "ap.Person", activity: "ap.BaseActivity"
+    ) -> bool:
         return activity.get_actor().id == as_actor.id
 
     @abc.abstractmethod
