@@ -1,6 +1,9 @@
 # Little Boxes
 
 <a href="https://travis-ci.org/tsileo/little-boxes"><img src="https://travis-ci.org/tsileo/little-boxes.svg?branch=master" alt="Build Status"></a>
+<a href="https://codecov.io/gh/tsileo/little-boxes">
+  <img src="https://codecov.io/gh/tsileo/little-boxes/branch/master/graph/badge.svg" />
+  </a>
 <img src="https://img.shields.io/pypi/pyversions/little-boxes.svg" />
 <a href="https://github.com/tsileo/little-boxes/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-ISC-red.svg?style=flat" alt="License"></a>
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
