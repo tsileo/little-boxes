@@ -50,3 +50,25 @@ def test_little_content_helper_mention(_):
             "type": "Mention",
         }
     ]
+
+
+@mock.patch(
+    "little_boxes.content_helper.get_actor_url", return_value="https://microblog.pub"
+)
+def test_little_content_helper_tag(_):
+    back = InMemBackend()
+    ap.use_backend(back)
+
+    content, tags = content_helper.parse_markdown("hello #activitypub")
+    base_url = back.base_url()
+    assert content == (
+        f'<p>hello <a href="{base_url}/tags/activitypub" class="mention hashtag" rel="tag">#'
+        f"<span>activitypub</span></a></p>"
+    )
+    assert tags == [
+        {
+            "href": f"{base_url}/tags/activitypub",
+            "name": "#activitypub",
+            "type": "Hashtag",
+        }
+    ]
