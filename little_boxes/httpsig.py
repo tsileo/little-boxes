@@ -90,11 +90,16 @@ class HTTPSigAuth(AuthBase):
         self.key = key
 
     def __call__(self, r):
-        logger.info(f"keyid={self.keyid}")
+        logger.info(f"keyid={self.key.key_id()}")
         host = urlparse(r.url).netloc
 
         bh = hashlib.new("sha256")
-        bh.update(r.body.encode("utf-8"))
+        body = r.body
+        try:
+            body = r.body.encode("utf-8")
+        except AttributeError:
+            pass
+        bh.update(body)
         bodydigest = "SHA-256=" + base64.b64encode(bh.digest()).decode("utf-8")
 
         date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
