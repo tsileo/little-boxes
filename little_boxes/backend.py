@@ -7,6 +7,10 @@ if typing.TYPE_CHECKING:
 
 class Backend(abc.ABC):
     @abc.abstractmethod
+    def base_url(self) -> str:
+        pass
+
+    @abc.abstractmethod
     def fetch_iri(self, iri: str) -> "ap.ObjectType":
         pass
 

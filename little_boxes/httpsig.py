@@ -14,12 +14,12 @@ from urllib.parse import urlparse
 
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_v1_5
-from flask import request
 from requests.auth import AuthBase
 
-logger = logging.getLogger(__name__)
+from .activitypub import get_backend
+from .key import Key
 
-# FIXME(tsileo): no more Flask
+logger = logging.getLogger(__name__)
 
 
 def _build_signed_string(
@@ -53,51 +53,71 @@ def _verify_h(signed_string, signature, pubkey):
     return signer.verify(digest, signature)
 
 
-def _body_digest() -> str:
+def _body_digest(body: str) -> str:
     h = hashlib.new("sha256")
-    h.update(request.data)
+    h.update(body)
     return "SHA-256=" + base64.b64encode(h.digest()).decode("utf-8")
 
 
-def verify_request(actor_service) -> bool:
-    hsig = _parse_sig_header(request.headers.get("Signature"))
+def _get_public_key(key_id: str) -> Key:
+    actor = get_backend().fetch_iri(key_id)
+    k = Key(actor["id"])
+    k.load_pub(actor["publicKey"]["publicKeyPem"])
+    return k
+
+
+def verify_request(method: str, path: str, headers: Any, body: str) -> bool:
+    hsig = _parse_sig_header(headers.get("Signature"))
     if not hsig:
         logger.debug("no signature in header")
         return False
     logger.debug(f"hsig={hsig}")
     signed_string = _build_signed_string(
-        hsig["headers"], request.method, request.path, request.headers, _body_digest()
+        hsig["headers"], method, path, headers, _body_digest(body)
     )
-    _, rk = actor_service.get_public_key(hsig["keyId"])
-    return _verify_h(signed_string, base64.b64decode(hsig["signature"]), rk)
+
+    k = _get_public_key(hsig["keyId"])
+    if k.key_id() != hsig["keyId"]:
+        return False
+
+    return _verify_h(signed_string, base64.b64decode(hsig["signature"]), k.pubkey)
 
 
 class HTTPSigAuth(AuthBase):
-    def __init__(self, keyid, privkey):
-        self.keyid = keyid
-        self.privkey = privkey
+    """Requests auth plugin for signing requests on the fly."""
+
+    def __init__(self, key: Key) -> None:
+        self.key = key
 
     def __call__(self, r):
         logger.info(f"keyid={self.keyid}")
         host = urlparse(r.url).netloc
+
         bh = hashlib.new("sha256")
         bh.update(r.body.encode("utf-8"))
         bodydigest = "SHA-256=" + base64.b64encode(bh.digest()).decode("utf-8")
+
         date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
-        r.headers.update({"Digest": bodydigest, "Date": date})
-        r.headers.update({"Host": host})
+
+        r.headers.update({"Digest": bodydigest, "Date": date, "Host": host})
+
         sigheaders = "(request-target) user-agent host date digest content-type"
+
         to_be_signed = _build_signed_string(
             sigheaders, r.method, r.path_url, r.headers, bodydigest
         )
-        signer = PKCS1_v1_5.new(self.privkey)
+        signer = PKCS1_v1_5.new(self.key.privkey)
         digest = SHA256.new()
         digest.update(to_be_signed.encode("utf-8"))
         sig = base64.b64encode(signer.sign(digest))
         sig = sig.decode("utf-8")
+
+        key_id = self.key.key_id()
         headers = {
-            "Signature": f'keyId="{self.keyid}",algorithm="rsa-sha256",headers="{sigheaders}",signature="{sig}"'
+            "Signature": f'keyId="{key_id}",algorithm="rsa-sha256",headers="{sigheaders}",signature="{sig}"'
         }
-        logger.info(f"signed request headers={headers}")
+        logger.debug(f"signed request headers={headers}")
+
         r.headers.update(headers)
+
         return r

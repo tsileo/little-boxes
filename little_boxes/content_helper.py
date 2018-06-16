@@ -6,8 +6,7 @@ from typing import Tuple
 from bleach.linkifier import Linker
 from markdown import markdown
 
-from .activitypub import BACKEND
-from .activitypub import UninitializedBackendError
+from .activitypub import get_backend
 from .webfinger import get_actor_url
 
 
@@ -25,10 +24,7 @@ MENTION_REGEX = re.compile(r"@[\d\w_.+-]+@[\d\w-]+\.[\d\w\-.]+")
 
 
 def hashtagify(content: str) -> Tuple[str, List[Dict[str, str]]]:
-    if BACKEND is None:
-        raise UninitializedBackendError
-
-    base_url = BACKEND.base_url()
+    base_url = get_backend().base_url()
     tags = []
     for hashtag in re.findall(HASHTAG_REGEX, content):
         tag = hashtag[1:]
@@ -39,14 +35,11 @@ def hashtagify(content: str) -> Tuple[str, List[Dict[str, str]]]:
 
 
 def mentionify(content: str) -> Tuple[str, List[Dict[str, str]]]:
-    if BACKEND is None:
-        raise UninitializedBackendError
-
     tags = []
     for mention in re.findall(MENTION_REGEX, content):
         _, username, domain = mention.split("@")
         actor_url = get_actor_url(mention)
-        p = BACKEND.fetch_iri(actor_url)
+        p = get_backend().fetch_iri(actor_url)
         tags.append(dict(type="Mention", href=p["id"], name=mention))
         link = f'<span class="h-card"><a href="{p["url"]}" class="u-url mention">@<span>{username}</span></a></span>'
         content = content.replace(mention, link)

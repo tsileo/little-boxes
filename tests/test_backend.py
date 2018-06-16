@@ -142,6 +142,9 @@ class InMemBackend(Backend):
         self.DB[as_actor.id]["inbox"].append(activity)
         self.INBOX_IDX[as_actor.id][activity.id] = activity
 
+    def base_url(self) -> str:
+        return "https://todo"
+
     def activity_url(self, obj_id: str) -> str:
         # from the random hex ID
         return f"https://todo/{obj_id}"

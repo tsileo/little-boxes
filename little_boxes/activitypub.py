@@ -42,6 +42,12 @@ _ACTIVITY_CLS: Dict["ActivityType", Type["BaseActivity"]] = {}
 BACKEND: Optional[Backend] = None
 
 
+def get_backend() -> Backend:
+    if BACKEND is None:
+        raise UninitializedBackendError
+    return BACKEND
+
+
 def use_backend(backend_instance):
     global BACKEND
     BACKEND = backend_instance

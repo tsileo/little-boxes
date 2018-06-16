@@ -13,6 +13,11 @@ class Key(object):
         self.privkey_pem: Optional[str] = None
         self.pubkey_pem: Optional[str] = None
         self.privkey: Optional[Any] = None
+        self.pubkey: Optional[Any] = None
+
+    def load_pub(self, pubkey_pem: str) -> None:
+        self.pubkey_pem = pubkey_pem
+        self.pubkey = RSA.importKey(pubkey_pem)
 
     def load(self, privkey_pem: str) -> None:
         self.privkey_pem = privkey_pem
@@ -25,9 +30,12 @@ class Key(object):
         self.pubkey_pem = k.publickey().exportKey("PEM").decode("utf-8")
         self.privkey = k
 
+    def key_id(self) -> str:
+        return f"{self.owner}#main-key"
+
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "id": f"{self.owner}#main-key",
+            "id": self.key_id(),
             "owner": self.owner,
             "publicKeyPem": self.pubkey_pem,
         }
