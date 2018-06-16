@@ -1,7 +1,5 @@
 import abc
 import typing
-from typing import Any
-from typing import Dict
 
 import requests
 
@@ -15,110 +13,110 @@ class Backend(abc.ABC):
     def user_agent(self) -> str:
         return f"Little Boxes {__version__} (+http://github.com/tsileo/little-boxes)"
 
-    def fetch_json(self, url: str) -> Dict[str, Any]:
+    def fetch_json(self, url: str, **kwargs):
         resp = requests.get(
-            url, headers={"User-Agent": self.user_agent(), "Accept": "application/json"}
+            url,
+            headers={"User-Agent": self.user_agent(), "Accept": "application/json"},
+            **kwargs,
         )
-        resp.raise_for_status()
-
-        return resp.json()
+        return resp
 
     @abc.abstractmethod
     def base_url(self) -> str:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def fetch_iri(self, iri: str) -> "ap.ObjectType":
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def activity_url(self, obj_id: str) -> str:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_create(self, as_actor: "ap.Person", activity: "ap.Create") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_delete(self, as_actor: "ap.Person", activity: "ap.Delete") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_create(self, as_actor: "ap.Person", activity: "ap.Create") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_delete(self, as_actor: "ap.Person", activity: "ap.Delete") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_is_blocked(self, as_actor: "ap.Person", actor_id: str) -> bool:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_new(self, as_actor: "ap.Person", activity: "ap.BaseActivity") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_new(self, as_actor: "ap.Person", activity: "ap.BaseActivity") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def new_follower(self, as_actor: "ap.Person", follow: "ap.Follow") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def new_following(self, as_actor: "ap.Person", follow: "ap.Follow") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def undo_new_follower(self, as_actor: "ap.Person", follow: "ap.Follow") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def undo_new_following(self, as_actor: "ap.Person", follow: "ap.Follow") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_update(self, as_actor: "ap.Person", activity: "ap.Update") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_update(self, as_actor: "ap.Person", activity: "ap.Update") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_like(self, as_actor: "ap.Person", activity: "ap.Like") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_undo_like(self, as_actor: "ap.Person", activity: "ap.Like") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_like(self, as_actor: "ap.Person", activity: "ap.Like") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_undo_like(self, as_actor: "ap.Person", activity: "ap.Like") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_announce(self, as_actor: "ap.Person", activity: "ap.Announce") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def inbox_undo_announce(
         self, as_actor: "ap.Person", activity: "ap.Announce"
     ) -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_announce(self, as_actor: "ap.Person", activity: "ap.Announce") -> None:
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def outbox_undo_announce(
         self, as_actor: "ap.Person", activity: "ap.Announce"
     ) -> None:
-        pass
+        pass  # pragma: no cover

@@ -21,7 +21,7 @@ def is_url_valid(url: str) -> bool:
 
     # XXX in debug mode, we want to allow requests to localhost to test the federation with local instances
     debug_mode = strtobool(os.getenv("MICROBLOGPUB_DEBUG", "false"))
-    if debug_mode:
+    if debug_mode:  # pragma: no cover
         return True
 
     if parsed.hostname in ["localhost"]:

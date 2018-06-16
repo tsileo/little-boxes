@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import requests
 
+from .activitypub import get_backend
 from .urlutils import check_url
 
 logger = logging.getLogger(__name__)
@@ -35,8 +36,8 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:
     for i, proto in enumerate(protos):
         try:
             url = f"{proto}://{host}/.well-known/webfinger"
-            # FIXME(tsileo): BACKEND.do_req so we can set a UserAgent
-            resp = requests.get(url, {"resource": resource})
+            # FIXME(tsileo): BACKEND.fetch_json so we can set a UserAgent
+            resp = get_backend().fetch_json(url, params={"resource": resource})
         except requests.ConnectionError:
             # If we tried https first and the domain is "http only"
             if i == 0:

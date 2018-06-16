@@ -495,6 +495,44 @@ def test_little_boxes_follow_and_new_create_note_and_delete():
     )
 
 
+def test_little_boxes_follow_and_new_create_note_and_update():
+    back, create = test_little_boxes_follow_and_new_create_note()
+
+    me = back.get_user("tom")
+    other = back.get_user("tom2")
+
+    outbox = ap.Outbox(other)
+
+    update = ap.Update(
+        actor=other.id,
+        object={
+            "content": "Hello2",
+            "id": create.get_object().id,
+            "type": "Note",
+            "attributedTo": other.id,
+        },
+    )
+    outbox.post(update)
+
+    back.assert_called_methods(
+        other,
+        (
+            "an Delete activity is published",
+            "outbox_new",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda activity: _assert_eq(activity.id, update.id),
+        ),
+        (
+            '"outbox_update" hook is called',
+            "outbox_update",
+            lambda as_actor: _assert_eq(as_actor.id, other.id),
+            lambda _update: _assert_eq(_update.id, update.id),
+        ),
+    )
+
+    back.assert_called_methods(me)
+
+
 def test_little_boxes_follow_and_new_create_note_and_like():
     back, create = test_little_boxes_follow_and_new_create_note()
 

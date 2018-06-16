@@ -973,10 +973,6 @@ class Note(BaseActivity):
     OBJECT_REQURIED = False
 
     def _init(self, **kwargs):
-        print(self._data)
-        # Remove the `actor` field as `attributedTo` is used for `Note` instead
-        if "actor" in self._data:
-            del (self._data["actor"])
         if "sensitive" not in kwargs:
             self._data["sensitive"] = False
 
