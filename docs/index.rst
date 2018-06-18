@@ -26,7 +26,7 @@ Tiny `ActivityPub <https://activitypub.rocks/>`_ framework written in Python, bo
 
 
 Features
-========
+--------
 
 * Database and server agnostic
   * You need to implement a backend that respond to activiy side-effects
@@ -42,13 +42,13 @@ Features
 
 
 Project using Little Boxes
-==========================
+--------------------------
 
 * `microblog.pub <http://github.com/tsileo/microblog.pub>`_
 
 
 Documentation
-=============
+-------------
 
 .. toctree::
    :maxdepth: 2
@@ -56,7 +56,7 @@ Documentation
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
