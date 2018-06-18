@@ -818,7 +818,10 @@ class Delete(BaseActivity):
 
         # FIXME(tsileo): overrides get_object instead?
         obj = self.get_object()
-        if obj.id.startswith(BACKEND.base_url()) and obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
+        if (
+            obj.id.startswith(BACKEND.base_url())
+            and obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE
+        ):
             obj = parse_activity(BACKEND.fetch_iri(obj.id))
         if obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
             # If we already received it, we may be able to get a copy
@@ -833,11 +836,13 @@ class Delete(BaseActivity):
 
     def _pre_process_from_inbox(self, as_actor: "Person") -> None:
         """Ensures a Delete activity comes from the same actor as the deleted activity."""
-        obj = self._get_actual_object()
-        actor = self.get_actor()
+        pass
+        # FIXME(tsileo): this should be done by the backend I think
+        # obj = self._get_actual_object()
+        # actor = self.get_actor()
 
-        if obj.ACTIVITY_TYPE != ActivityType.TOMBSTONE and actor.id != obj.get_actor().id:
-            raise BadActivityError(f"{actor!r} cannot delete {obj!r}")
+        # if obj.ACTIVITY_TYPE != ActivityType.TOMBSTONE and actor.id != obj.get_actor().id:
+        #    raise BadActivityError(f"{actor!r} cannot delete {obj!r}")
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
         if BACKEND is None:
@@ -1028,10 +1033,7 @@ class Note(BaseActivity):
             actor=as_actor.id,
             object=self.id,
             to=[AS_PUBLIC],
-            cc=[
-                as_actor.followers,
-                self.attributedTo,
-            ],
+            cc=[as_actor.followers, self.attributedTo],
             published=datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         )
 
