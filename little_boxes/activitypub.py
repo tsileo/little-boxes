@@ -818,7 +818,7 @@ class Delete(BaseActivity):
 
         # FIXME(tsileo): overrides get_object instead?
         obj = self.get_object()
-        if obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
+        if obj.id.startswith(BACKEND.base_url()) and obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
             obj = parse_activity(BACKEND.fetch_iri(obj.id))
         return obj
 
@@ -1023,9 +1023,9 @@ class Note(BaseActivity):
             object=self.id,
             to=[AS_PUBLIC],
             cc=[
-                self.follower_collection_id(self.get_actor()),
+                as_actor.followers,
                 self.attributedTo,
-            ],  # ABC
+            ],
             published=datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         )
 
