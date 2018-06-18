@@ -164,6 +164,8 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         # A place to set ephemeral data
         self.__ctx: Any = {}
 
+        self.__obj = self.__actor = None
+
         # The id may not be present for new activities
         if "id" in kwargs:
             self._data["id"] = kwargs.pop("id")
@@ -352,6 +354,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         if BACKEND is None:
             raise UninitializedBackendError
 
+        if self.__actor:
+            return self.__actor
+
         # FIXME(tsileo): cache the actor (same way as get_object)
         actor = self._data.get("actor")
         if not actor and self.ACTOR_REQUIRED:
@@ -365,7 +370,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             raise BadActivityError(f"invalid actor: {self._data!r}")
 
         actor_id = self._actor_id(actor)
-        return Person(**BACKEND.fetch_iri(actor_id))
+        p = Person(**BACKEND.fetch_iri(actor_id))
+        self.__actor: Optional["Person"] = p
+        return p
 
     def _pre_post_to_outbox(self, as_actor: "Person") -> None:
         raise NotImplementedError
