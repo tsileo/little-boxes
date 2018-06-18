@@ -836,7 +836,7 @@ class Delete(BaseActivity):
         obj = self._get_actual_object()
         actor = self.get_actor()
 
-        if actor.id != obj.get_actor().id:
+        if obj.ACTIVITY_TYPE != ActivityType.TOMBSTONE and actor.id != obj.get_actor().id:
             raise BadActivityError(f"{actor!r} cannot delete {obj!r}")
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
