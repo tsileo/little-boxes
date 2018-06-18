@@ -34,8 +34,9 @@ _WEBFINGER_RESP = {
 
 
 @mock.patch("little_boxes.webfinger.check_url", return_value=None)
+@mock.patch("little_boxes.backend.check_url", return_value=None)
 @httpretty.activate
-def test_webfinger(_):
+def test_webfinger(_, _1):
     # FIXME(tsileo): it should try https first
     httpretty.register_uri(
         httpretty.GET,
@@ -54,4 +55,4 @@ def test_webfinger(_):
 
 def test_webfinger_invalid_url():
     with pytest.raises(urlutils.InvalidURLError):
-        data = webfinger.webfinger("@dev@localhost:8080")
+        webfinger.webfinger("@dev@localhost:8080")
