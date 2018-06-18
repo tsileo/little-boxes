@@ -17,7 +17,7 @@ Tiny [ActivityPub](https://activitypub.rocks/) framework written in Python, both
 
  - Database and server agnostic
    - You need to implement a backend that respond to activiy side-effects
-   - This also need you're responsible for serving the activities/collections and receiving them
+   - This also mean you're responsible for serving the activities/collections and receiving them
  - ActivityStreams helper classes
    - with Outbox/Inbox abstractions
  - Content helper using Mardown
