@@ -541,7 +541,7 @@ def test_little_boxes_follow_and_new_create_note_and_like():
 
     outbox = ap.Outbox(me)
 
-    like = ap.Like(actor=me.id, object=create.get_object().id)
+    like = create.get_object().build_like(me)
     outbox.post(like)
 
     back.assert_called_methods(

@@ -1014,8 +1014,11 @@ class Note(BaseActivity):
 
         return create
 
-    def build_like(self) -> BaseActivity:
-        return Like(object=self.id)
+    def build_like(self, as_actor: "Person") -> BaseActivity:
+        return Like(
+            object=self.id,
+            actor=as_actor.id,
+        )
 
     def build_announce(self) -> BaseActivity:
         return Announce(
