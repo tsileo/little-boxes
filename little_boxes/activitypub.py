@@ -164,7 +164,8 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         # A place to set ephemeral data
         self.__ctx: Any = {}
 
-        self.__obj = self.__actor = None
+        self.__obj: Optional["BaseActivity"] = None
+        self.__actor: Optional["Person"] = None
 
         # The id may not be present for new activities
         if "id" in kwargs:
@@ -321,7 +322,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 )
             p = parse_activity(obj)
 
-        self.__obj: Optional["BaseActivity"] = p
+        self.__obj = p
         return p
 
     def reset_object_cache(self) -> None:
@@ -371,7 +372,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         actor_id = self._actor_id(actor)
         p = Person(**BACKEND.fetch_iri(actor_id))
-        self.__actor: Optional["Person"] = p
+        self.__actor = p
         return p
 
     def _pre_post_to_outbox(self, as_actor: "Person") -> None:
