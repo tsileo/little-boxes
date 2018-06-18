@@ -820,6 +820,11 @@ class Delete(BaseActivity):
         obj = self.get_object()
         if obj.id.startswith(BACKEND.base_url()) and obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
             obj = parse_activity(BACKEND.fetch_iri(obj.id))
+        if obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
+            # If we already received it, we may be able to get a copy
+            better_obj = BACKEND.fetch_iri(obj.id)
+            if better_obj:
+                return parse_activity(better_obj)
         return obj
 
     def _recipients(self) -> List[str]:
@@ -830,6 +835,7 @@ class Delete(BaseActivity):
         """Ensures a Delete activity comes from the same actor as the deleted activity."""
         obj = self._get_actual_object()
         actor = self.get_actor()
+
         if actor.id != obj.get_actor().id:
             raise BadActivityError(f"{actor!r} cannot delete {obj!r}")
 
