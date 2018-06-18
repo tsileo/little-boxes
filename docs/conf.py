@@ -95,12 +95,12 @@ html_static_path = ["_static"]
 # 'searchbox.html']``.
 #
 html_sidebars = {
-    '**': [
-        'about.html',
-        'sidebar_badges.html',
-        'navigation.html',
-        'searchbox.html',
-        'sidebar_end.html',
+    "**": [
+        "about.html",
+        "sidebar_badges.html",
+        "navigation.html",
+        "searchbox.html",
+        "sidebar_end.html",
     ]
 }
 
