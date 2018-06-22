@@ -15,8 +15,10 @@ from .backend import Backend
 from .collection import parse_collection
 from .errors import BadActivityError
 from .errors import Error
+from .errors import RemoteActivityGoneError
 from .errors import NotFromOutboxError
 from .errors import UnexpectedActivityTypeError
+
 
 logger = logging.getLogger(__name__)
 
@@ -492,7 +494,12 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                     continue
                 actor = recipient
             else:
-                raw_actor = BACKEND.fetch_iri(recipient)
+                try:
+                    raw_actor = BACKEND.fetch_iri(recipient)
+                except RemoteActivityGoneError:
+                    logger.info(f"{recipient} is gone")
+                    continue
+
                 if raw_actor["type"] == ActivityType.PERSON.value:
                     actor = Person(**raw_actor)
 
@@ -511,12 +518,19 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                     ActivityType.ORDERED_COLLECTION.value,
                 ]:
                     for item in parse_collection(raw_actor, fetcher=BACKEND.fetch_iri):
+                        # XXX(tsileo): is nested collection support needed here?
                         if item in [actor_id, AS_PUBLIC]:
                             continue
                         try:
-                            col_actor = Person(**BACKEND.fetch_iri(item))
+                            col_actor = fetch_remote_activity(
+                                item, expected=ActivityType.PERSON
+                            )
                         except UnexpectedActivityTypeError:
                             logger.exception(f"failed to fetch actor {item!r}")
+                            continue
+                        except RemoteActivityGoneError:
+                            logger.info(f"{item} is gone")
+                            continue
 
                         if col_actor.endpoints:
                             shared_inbox = col_actor.endpoints.get("sharedInbox")
@@ -1056,7 +1070,9 @@ class Note(BaseActivity):
         )
 
 
-def fetch_remote_activity(iri: str, expected: Optional[ActivityType]) -> BaseActivity:
+def fetch_remote_activity(
+    iri: str, expected: Optional[ActivityType] = None
+) -> BaseActivity:
     return parse_activity(get_backend().fetch_iri(iri), expected=expected)
 
 

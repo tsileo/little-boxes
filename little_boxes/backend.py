@@ -7,6 +7,7 @@ import requests
 
 from .__version__ import __version__
 from .errors import ActivityNotFoundError
+from .errors import RemoteActivityGoneError
 from .urlutils import check_url
 
 if typing.TYPE_CHECKING:
@@ -31,6 +32,9 @@ class Backend(abc.ABC):
             headers={"User-Agent": self.user_agent(), "Accept": "application/json"},
             **kwargs,
         )
+
+        resp.raise_for_status()
+
         return resp
 
     def is_from_outbox(
@@ -60,6 +64,8 @@ class Backend(abc.ABC):
         )
         if resp.status_code == 404:
             raise ActivityNotFoundError(f"{iri} is not found")
+        elif resp.status_code == 410:
+            raise RemoteActivityGoneError(f"{iri} is gone")
 
         resp.raise_for_status()
 

@@ -5,6 +5,14 @@ from typing import Optional
 
 
 class Error(Exception):
+    """Base error for exceptions raised by this package."""
+
+
+class RemoteActivityGoneError(Error):
+    """Raised when trying to fetch a remote activity that was deleted."""
+
+
+class ServerError(Error):
     """HTTP-friendly base error, with a status code, a message and an optional payload."""
 
     status_code = 400
@@ -36,21 +44,21 @@ class Error(Exception):
         return self.__repr__()
 
 
-class ActorBlockedError(Error):
+class ActorBlockedError(ServerError):
     """Raised when an activity from a blocked actor is received."""
 
 
-class NotFromOutboxError(Error):
+class NotFromOutboxError(ServerError):
     """Raised when an activity targets an object from the inbox when an object from the oubox was expected."""
 
 
-class ActivityNotFoundError(Error):
+class ActivityNotFoundError(ServerError):
     """Raised when an activity is not found."""
 
     status_code = 404
 
 
-class BadActivityError(Error):
+class BadActivityError(ServerError):
     """Raised when an activity could not be parsed/initialized."""
 
 
