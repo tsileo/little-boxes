@@ -58,7 +58,7 @@ ap.use_backend(my_backend)
 me = ap.Person({})  # Init an actor
 outbox = ap.Outbox(me)
 
-follow = ap.Follow(actor=me, object='http://iri-i-want-follow')
+follow = ap.Follow(actor=me.id, object='http://iri-i-want-follow')
 outbox.post(follow)
 ```
 
