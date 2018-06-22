@@ -80,6 +80,10 @@ class Backend(abc.ABC):
         pass  # pragma: no cover
 
     @abc.abstractmethod
+    def note_url(self, obj_id: str) -> str:
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
     def outbox_create(self, as_actor: "ap.Person", activity: "ap.Create") -> None:
         pass  # pragma: no cover
 

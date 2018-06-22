@@ -1,6 +1,4 @@
-import binascii
 import json
-import os
 from typing import List
 from typing import Optional
 
@@ -144,6 +142,10 @@ class InMemBackend(Backend):
     def activity_url(self, obj_id: str) -> str:
         # from the random hex ID
         return f"https://todo/{obj_id}"
+
+    def note_url(self, obj_id: str) -> str:
+        # from the random hex ID
+        return f"https://todo/note/{obj_id}"
 
     @track_call
     def outbox_new(self, as_actor: ap.Person, activity: ap.BaseActivity) -> None:
