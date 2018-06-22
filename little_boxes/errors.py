@@ -32,6 +32,9 @@ class Error(Exception):
             f"payload={self.payload!r}, status_code={self.status_code})"
         )
 
+    def __str__(self) -> str:
+        return self.__repr__()
+
 
 class ActorBlockedError(Error):
     """Raised when an activity from a blocked actor is received."""
