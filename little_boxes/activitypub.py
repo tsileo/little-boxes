@@ -1056,6 +1056,10 @@ class Note(BaseActivity):
         )
 
 
+def fetch_remote_activity(iri: str, expected: Optional[ActivityType]) -> BaseActivity:
+    return parse_activity(get_backend().fetch_iri(iri), expected=expected)
+
+
 class Box(object):
     def __init__(self, actor: Person) -> None:
         self.actor = actor

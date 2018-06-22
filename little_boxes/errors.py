@@ -26,13 +26,13 @@ class Error(Exception):
         rv["message"] = self.message
         return rv
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         return (
             f"{self.__class__.__qualname__}({self.message!r}, "
             f"payload={self.payload!r}, status_code={self.status_code})"
         )
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return self.__repr__()
 
 
