@@ -15,10 +15,9 @@ from .backend import Backend
 from .collection import parse_collection
 from .errors import BadActivityError
 from .errors import Error
-from .errors import RemoteActivityGoneError
 from .errors import NotFromOutboxError
+from .errors import RemoteActivityGoneError
 from .errors import UnexpectedActivityTypeError
-
 
 logger = logging.getLogger(__name__)
 

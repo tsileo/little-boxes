@@ -2,12 +2,16 @@ import ipaddress
 import logging
 import os
 import socket
+from typing import Dict
 from urllib.parse import urlparse
 
 from . import strtobool
 from .errors import Error
 
 logger = logging.getLogger(__name__)
+
+
+_CACHE: Dict[str, bool] = {}
 
 
 class InvalidURLError(Error):
@@ -27,6 +31,9 @@ def is_url_valid(url: str) -> bool:
     if parsed.hostname in ["localhost"]:
         return False
 
+    if _CACHE.get(parsed.hostname, False):
+        return True
+
     try:
         ip_address = ipaddress.ip_address(parsed.hostname)
     except ValueError:
@@ -35,14 +42,17 @@ def is_url_valid(url: str) -> bool:
             logger.debug(f"dns lookup: {parsed.hostname} -> {ip_address}")
         except socket.gaierror:
             logger.exception(f"failed to lookup url {url}")
+            _CACHE[parsed.hostname] = False
             return False
 
     logger.debug(f"{ip_address}")
 
     if ipaddress.ip_address(ip_address).is_private:
         logger.info(f"rejecting private URL {url}")
+        _CACHE[parsed.hostname] = False
         return False
 
+    _CACHE[parsed.hostname] = True
     return True
 
 
