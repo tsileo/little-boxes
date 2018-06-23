@@ -956,8 +956,6 @@ class Create(BaseActivity):
                 self.ctx().id = self._data["object"]["id"]
             except NotImplementedError:
                 pass
-        # FIXME(tsileo): re-enable this
-        # self._data["object"]["url"] = self.note_url(self)
         self.reset_object_cache()
 
     def _init(self, **kwargs):

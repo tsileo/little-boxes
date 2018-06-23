@@ -4,6 +4,7 @@
 <a href="https://codecov.io/gh/tsileo/little-boxes">
   <img src="https://codecov.io/gh/tsileo/little-boxes/branch/master/graph/badge.svg" />
   </a>
+<a href="https://codeclimate.com/github/tsileo/little-boxes/maintainability"><img src="https://api.codeclimate.com/v1/badges/93e0622a23d35c14555e/maintainability" /></a>
 <img src="https://img.shields.io/pypi/pyversions/little-boxes.svg" />
 <a href="https://github.com/tsileo/little-boxes/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-ISC-red.svg?style=flat" alt="License"></a>
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
