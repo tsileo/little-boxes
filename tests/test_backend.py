@@ -65,6 +65,9 @@ class InMemBackend(Backend):
 
         return calls
 
+    def debug_mode(self) -> bool:
+        return True
+
     def setup_actor(self, name, pusername):
         """Create a new actor in this backend."""
         p = ap.Person(

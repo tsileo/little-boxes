@@ -8,13 +8,20 @@ import requests
 from .__version__ import __version__
 from .errors import ActivityNotFoundError
 from .errors import RemoteActivityGoneError
-from .urlutils import check_url
+from .urlutils import check_url as check_url
 
 if typing.TYPE_CHECKING:
     from little_boxes import activitypub as ap  # noqa: type checking
 
 
 class Backend(abc.ABC):
+    def debug_mode(self) -> bool:
+        """Should be overidded to return `True` in order to enable the debug mode."""
+        return False
+
+    def check_url(self, url: str) -> None:
+        check_url(url, debug=self.debug_mode())
+
     def user_agent(self) -> str:
         return (
             f"{requests.utils.default_user_agent()} (Little Boxes/{__version__};"
@@ -26,7 +33,7 @@ class Backend(abc.ABC):
         return binascii.hexlify(os.urandom(8)).decode("utf-8")
 
     def fetch_json(self, url: str, **kwargs):
-        check_url(url)
+        self.check_url(url)
         resp = requests.get(
             url,
             headers={"User-Agent": self.user_agent(), "Accept": "application/json"},
@@ -53,7 +60,7 @@ class Backend(abc.ABC):
         pass  # pragma: no cover
 
     def fetch_iri(self, iri: str, **kwargs) -> "ap.ObjectType":  # pragma: no cover
-        check_url(iri)
+        self.check_url(iri)
         resp = requests.get(
             iri,
             headers={
