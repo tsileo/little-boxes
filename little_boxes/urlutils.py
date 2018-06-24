@@ -4,7 +4,7 @@ import socket
 from typing import Dict
 from urllib.parse import urlparse
 
-from .errors import Error
+from .errors import ServerError
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 _CACHE: Dict[str, bool] = {}
 
 
-class InvalidURLError(Error):
+class InvalidURLError(ServerError):
     pass
 
 
