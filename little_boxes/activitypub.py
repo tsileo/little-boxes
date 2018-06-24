@@ -62,7 +62,6 @@ class ActivityType(Enum):
     LIKE = "Like"
     CREATE = "Create"
     UPDATE = "Update"
-    PERSON = "Person"
     ORDERED_COLLECTION = "OrderedCollection"
     ORDERED_COLLECTION_PAGE = "OrderedCollectionPage"
     COLLECTION_PAGE = "CollectionPage"
@@ -75,6 +74,24 @@ class ActivityType(Enum):
     UNDO = "Undo"
     IMAGE = "Image"
     TOMBSTONE = "Tombstone"
+
+    # Actor types
+    PERSON = "Person"
+    APPLICATION = "Application"
+    GROUP = "Group"
+    ORGANIZATION = "Organization"
+    SERVICE = "Service"
+
+
+ACTOR_TYPES = [
+    ActivityType.PERSON,
+    ActivityType.APPLICATION,
+    ActivityType.GROUP,
+    ActivityType.ORGANIZATION,
+    ActivityType.SERVICE,
+]
+
+COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
 
 
 def parse_activity(
@@ -172,11 +189,11 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         if "id" in kwargs:
             self._data["id"] = kwargs.pop("id")
 
-        if self.ACTIVITY_TYPE != ActivityType.PERSON and self.ACTOR_REQUIRED:
+        if self.ACTIVITY_TYPE not in ACTOR_TYPES and self.ACTOR_REQUIRED:
             actor = kwargs.get("actor")
             if actor:
                 kwargs.pop("actor")
-                actor = self._validate_person(actor)
+                actor = self._validate_actor(actor)
                 self._data["actor"] = actor
             elif self.ACTIVITY_TYPE == ActivityType.NOTE:
                 if "attributedTo" not in kwargs:
@@ -291,7 +308,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         else:
             raise BadActivityError(f'invalid "actor" field: {obj!r}')
 
-    def _validate_person(self, obj: ObjectOrIDType) -> str:
+    def _validate_actor(self, obj: ObjectOrIDType) -> str:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -303,6 +320,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         if not actor or "id" not in actor:
             raise BadActivityError(f"invalid actor {actor}")
+
+        if ActivityType(actor["type"]) not in ACTOR_TYPES:
+            raise UnexpectedActivityTypeError(f'actor has wrong type {actor["type"]!r}')
 
         return actor["id"]
 
@@ -488,58 +508,53 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             #    continue
             if recipient in [actor_id, AS_PUBLIC, None]:
                 continue
-            if isinstance(recipient, Person):
-                if recipient.id == actor_id:
-                    continue
-                actor = recipient
-            else:
-                try:
-                    raw_actor = BACKEND.fetch_iri(recipient)
-                except RemoteActivityGoneError:
-                    logger.info(f"{recipient} is gone")
-                    continue
 
-                if raw_actor["type"] == ActivityType.PERSON.value:
-                    actor = Person(**raw_actor)
+            try:
+                actor = fetch_remote_activity(recipient)
+            except RemoteActivityGoneError:
+                logger.info(f"{recipient} is gone")
+                continue
 
-                    if actor.endpoints:
-                        shared_inbox = actor.endpoints.get("sharedInbox")
+            if actor.ACTIVITY_TYPE in ACTOR_TYPES:
+                if actor.endpoints:
+                    shared_inbox = actor.endpoints.get("sharedInbox")
+                    if shared_inbox not in out:
+                        out.append(shared_inbox)
+                        continue
+
+                if actor.inbox and actor.inbox not in out:
+                    out.append(actor.inbox)
+
+            # Is the activity a `Collection`/`OrderedCollection`?
+            elif actor.ACTIVITY_TYPE in COLLECTION_TYPES:
+                for item in parse_collection(
+                    actor.to_dict(), fetcher=BACKEND.fetch_iri
+                ):
+                    # XXX(tsileo): is nested collection support needed here?
+
+                    if item in [actor_id, AS_PUBLIC]:
+                        continue
+
+                    try:
+                        col_actor = fetch_remote_activity(
+                            item, expected=ActivityType.PERSON
+                        )
+                    except UnexpectedActivityTypeError:
+                        logger.exception(f"failed to fetch actor {item!r}")
+                        continue
+                    except RemoteActivityGoneError:
+                        logger.info(f"{item} is gone")
+                        continue
+
+                    if col_actor.endpoints:
+                        shared_inbox = col_actor.endpoints.get("sharedInbox")
                         if shared_inbox not in out:
                             out.append(shared_inbox)
                             continue
-
-                    if actor.inbox and actor.inbox not in out:
-                        out.append(actor.inbox)
-
-                # Is the activity a `Collection`/`OrderedCollection`?
-                elif raw_actor["type"] in [
-                    ActivityType.COLLECTION.value,
-                    ActivityType.ORDERED_COLLECTION.value,
-                ]:
-                    for item in parse_collection(raw_actor, fetcher=BACKEND.fetch_iri):
-                        # XXX(tsileo): is nested collection support needed here?
-                        if item in [actor_id, AS_PUBLIC]:
-                            continue
-                        try:
-                            col_actor = fetch_remote_activity(
-                                item, expected=ActivityType.PERSON
-                            )
-                        except UnexpectedActivityTypeError:
-                            logger.exception(f"failed to fetch actor {item!r}")
-                            continue
-                        except RemoteActivityGoneError:
-                            logger.info(f"{item} is gone")
-                            continue
-
-                        if col_actor.endpoints:
-                            shared_inbox = col_actor.endpoints.get("sharedInbox")
-                            if shared_inbox not in out:
-                                out.append(shared_inbox)
-                                continue
-                        if col_actor.inbox and col_actor.inbox not in out:
-                            out.append(col_actor.inbox)
-                else:
-                    raise BadActivityError(f"failed to parse {raw_actor!r}")
+                    if col_actor.inbox and col_actor.inbox not in out:
+                        out.append(col_actor.inbox)
+            else:
+                raise BadActivityError(f"failed to parse {recipient}")
 
         return out
 
@@ -556,6 +571,30 @@ class Person(BaseActivity):
     ACTOR_REQUIRED = False
 
 
+class Service(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.SERVICE
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+
+class Application(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.APPLICATION
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+
+class Group(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.GROUP
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+
+class Organization(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.ORGANIZATION
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+
 class Block(BaseActivity):
     ACTIVITY_TYPE = ActivityType.BLOCK
     OBJECT_REQUIRED = True
@@ -564,6 +603,12 @@ class Block(BaseActivity):
 
 class Collection(BaseActivity):
     ACTIVITY_TYPE = ActivityType.COLLECTION
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+
+class OerderedCollection(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.ORDERED_COLLECTION
     OBJECT_REQUIRED = False
     ACTOR_REQUIRED = False
 
