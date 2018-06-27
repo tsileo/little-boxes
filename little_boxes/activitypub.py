@@ -235,7 +235,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                     self.ACTIVITY_TYPE != ActivityType.CREATE and "id" not in obj
                 ):
                     raise BadActivityError("invalid object, missing type")
-                if not _has_type(obj["type"], self.ALLOWED_OBJECT_TYPES):
+                if not _has_type(obj["type"], self.ALLOWED_OBJECT_TYPES):  # type: ignore  # XXX: too complicated
                     raise UnexpectedActivityTypeError(
                         f'unexpected object type {obj["type"]} (allowed={self.ALLOWED_OBJECT_TYPES!r})'
                     )
@@ -351,7 +351,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         if not actor or "id" not in actor:
             raise BadActivityError(f"invalid actor {actor}")
 
-        if not _has_type(actor["type"], ACTOR_TYPES):
+        if not _has_type(actor["type"], ACTOR_TYPES):  # type: ignore  # XXX: too complicated
             raise UnexpectedActivityTypeError(f'actor has wrong type {actor["type"]!r}')
 
         return actor["id"]
