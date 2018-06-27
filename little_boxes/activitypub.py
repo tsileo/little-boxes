@@ -97,7 +97,7 @@ COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
 def parse_activity(
     payload: ObjectType, expected: Optional[ActivityType] = None
 ) -> "BaseActivity":
-    t = ActivityType(payload["type"])
+    t = ActivityType(_to_list(payload["type"])[0])
 
     if expected and t != expected:
         raise UnexpectedActivityTypeError(
@@ -139,6 +139,21 @@ def _get_actor_id(actor: ObjectOrIDType) -> str:
     return actor
 
 
+def _has_type(
+    obj_type: Union[str, List[str]],
+    _types: Union[ActivityType, str, List[Union[ActivityType, str]]],
+):
+    """Returns `True` if one of `obj_type` equals one of `_types`."""
+    types_str = [
+        _type.value if isinstance(_type, ActivityType) else _type
+        for _type in _to_list(obj_type)
+    ]
+    for _type in _to_list(obj_type):
+        if _type in types_str:
+            return True
+    return False
+
+
 class _ActivityMeta(type):
     """Metaclass for keeping track of subclass."""
 
@@ -170,13 +185,19 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         if not self.ACTIVITY_TYPE:
             raise Error("should never happen")
 
-        if kwargs.get("type") and kwargs.pop("type") != self.ACTIVITY_TYPE.value:
-            raise UnexpectedActivityTypeError(
-                f"Expect the type to be {self.ACTIVITY_TYPE.value!r}"
-            )
-
         # Initialize the dict that will contains all the activity fields
-        self._data: Dict[str, Any] = {"type": self.ACTIVITY_TYPE.value}
+        self._data: Dict[str, Any] = {}
+
+        if not kwargs.get("type"):
+            self._data["type"] = self.ACTIVITY_TYPE.value
+        else:
+            atype = kwargs.pop("type")
+            if self.ACTIVITY_TYPE.value not in _to_list(atype):
+                raise UnexpectedActivityTypeError(
+                    f"Expect the type to be {self.ACTIVITY_TYPE.value!r}"
+                )
+            self._data["type"] = atype
+
         logger.debug(f"initializing a {self.ACTIVITY_TYPE.value} activity: {kwargs!r}")
 
         # A place to set ephemeral data
@@ -207,18 +228,22 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 # The object is a just a reference the its ID/IRI
                 # FIXME(tsileo): fetch the ref
                 self._data["object"] = obj
-            else:
+            elif isinstance(obj, dict):
                 if not self.ALLOWED_OBJECT_TYPES:
                     raise UnexpectedActivityTypeError("unexpected object")
                 if "type" not in obj or (
                     self.ACTIVITY_TYPE != ActivityType.CREATE and "id" not in obj
                 ):
                     raise BadActivityError("invalid object, missing type")
-                if ActivityType(obj["type"]) not in self.ALLOWED_OBJECT_TYPES:
+                if not _has_type(obj["type"], self.ALLOWED_OBJECT_TYPES):
                     raise UnexpectedActivityTypeError(
                         f'unexpected object type {obj["type"]} (allowed={self.ALLOWED_OBJECT_TYPES!r})'
                     )
                 self._data["object"] = obj
+            else:
+                raise BadActivityError(
+                    f"invalid object type ({type(obj).__qualname__}): {obj!r}"
+                )
 
         if "@context" not in kwargs:
             self._data["@context"] = CTX_AS
@@ -260,6 +285,11 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 valid_kwargs[k] = v
             self._data.update(**valid_kwargs)
 
+    def has_type(
+        self, _types: Union[ActivityType, str, List[Union[ActivityType, str]]]
+    ):
+        return self._has_type(self._data["type"], _types)
+
     def ctx(self) -> Any:
         return self.__ctx()
 
@@ -298,7 +328,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             pass
 
     def _actor_id(self, obj: ObjectOrIDType) -> str:
-        if isinstance(obj, dict) and obj["type"] == ActivityType.PERSON.value:
+        if isinstance(obj, dict) and _has_type(obj["type"], ActivityType.PERSON):
             obj_id = obj.get("id")
             if not obj_id:
                 raise BadActivityError(f"missing object id: {obj!r}")
@@ -321,7 +351,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         if not actor or "id" not in actor:
             raise BadActivityError(f"invalid actor {actor}")
 
-        if ActivityType(actor["type"]) not in ACTOR_TYPES:
+        if not _has_type(actor["type"], ACTOR_TYPES):
             raise UnexpectedActivityTypeError(f'actor has wrong type {actor["type"]!r}')
 
         return actor["id"]
