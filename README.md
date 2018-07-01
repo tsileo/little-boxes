@@ -12,6 +12,8 @@ Tiny [ActivityPub](https://activitypub.rocks/) framework written in Python, both
 
 **Still in early development, and not published on PyPI yet.**
 
+Until a first version is released, the main goal of this framework is to power the [microblog.pub microblog engine](http://github.com/tsileo/microblog.pub).
+
 
 ## Features
 
