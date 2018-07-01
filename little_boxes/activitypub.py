@@ -14,6 +14,7 @@ from typing import Union
 from .backend import Backend
 from .collection import parse_collection
 from .errors import BadActivityError
+from .errors import DropActivityPreProcessError
 from .errors import Error
 from .errors import NotFromOutboxError
 from .errors import RemoteActivityGoneError
@@ -478,6 +479,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         try:
             self._pre_process_from_inbox(as_actor)
             logger.debug("called pre process from inbox hook")
+        except DropActivityPreProcessError:
+            logger.info("dropping activty")
+            return
         except NotImplementedError:
             logger.debug("pre process from inbox hook not implemented")
 
@@ -863,17 +867,17 @@ class Announce(BaseActivity):
 
         return list(set(recipients))
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _pre_process_from_inbox(self, as_actor: "Person") -> None:
         # XXX(tsileo): Mastodon will try to send Announce for OStatus only acitivities which we cannot parse
         if isinstance(self._data["object"], str) and not self._data[
             "object"
         ].startswith("http"):
             # TODO(tsileo): actually drop it without storing it and better logging, also move the check somewhere else
-            logger.warn(
+            raise DropActivityPreProcessError(
                 f'received an Annouce referencing an OStatus notice ({self._data["object"]}), dropping the message'
             )
-            return
 
+    def _process_from_inbox(self, as_actor: "Person") -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 

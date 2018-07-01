@@ -12,6 +12,13 @@ class RemoteActivityGoneError(Error):
     """Raised when trying to fetch a remote activity that was deleted."""
 
 
+class DropActivityPreProcessError(Error):
+    """Raised in `_pre_process_from_inbox` to notify that we don't want to save the message.
+
+    (like when receiving `Announce` with an OStatus link).
+    """
+
+
 class ServerError(Error):
     """HTTP-friendly base error, with a status code, a message and an optional payload."""
 
