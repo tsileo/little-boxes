@@ -1,8 +1,10 @@
+import base64
 from typing import Any
 from typing import Dict
 from typing import Optional
 
 from Crypto.PublicKey import RSA
+from Crypto.Util import number
 
 
 class Key(object):
@@ -39,3 +41,12 @@ class Key(object):
             "owner": self.owner,
             "publicKeyPem": self.pubkey_pem,
         }
+
+    def to_magic_key(self) -> str:
+        mod = base64.urlsafe_b64encode(
+            number.long_to_bytes(self.privkey.n)  # type: ignore
+        ).decode("utf-8")
+        pubexp = base64.urlsafe_b64encode(
+            number.long_to_bytes(self.privkey.e)  # type: ignore
+        ).decode("utf-8")
+        return f"data:application/magic-public-key,RSA.{mod}.{pubexp}"
