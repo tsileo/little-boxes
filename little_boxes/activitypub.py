@@ -608,29 +608,31 @@ class Person(BaseActivity):
     OBJECT_REQUIRED = False
     ACTOR_REQUIRED = False
 
+    def get_url(self) -> str:
+        if isinstance(self.url, str):
+            return self.url
+        elif isinstance(self.url, dict):
+            if self.url.get("type") != "Link":
+                raise BadActivityError(f"invalid type {self.url}")
+            return self.url.get("href")
+        else:
+            raise BadActivityError(f"invalid type for {self.url}")
 
-class Service(BaseActivity):
+
+class Service(Person):
     ACTIVITY_TYPE = ActivityType.SERVICE
-    OBJECT_REQUIRED = False
-    ACTOR_REQUIRED = False
 
 
-class Application(BaseActivity):
+class Application(Person):
     ACTIVITY_TYPE = ActivityType.APPLICATION
-    OBJECT_REQUIRED = False
-    ACTOR_REQUIRED = False
 
 
-class Group(BaseActivity):
+class Group(Person):
     ACTIVITY_TYPE = ActivityType.GROUP
-    OBJECT_REQUIRED = False
-    ACTOR_REQUIRED = False
 
 
-class Organization(BaseActivity):
+class Organization(Person):
     ACTIVITY_TYPE = ActivityType.ORGANIZATION
-    OBJECT_REQUIRED = False
-    ACTOR_REQUIRED = False
 
 
 class Block(BaseActivity):
