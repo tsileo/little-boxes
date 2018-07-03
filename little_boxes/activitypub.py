@@ -614,7 +614,7 @@ class Person(BaseActivity):
         elif isinstance(self.url, dict):
             if self.url.get("type") != "Link":
                 raise BadActivityError(f"invalid type {self.url}")
-            return self.url.get("href")
+            return str(self.url.get("href"))
         else:
             raise BadActivityError(f"invalid type for {self.url}")
 
