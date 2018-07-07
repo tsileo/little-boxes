@@ -531,6 +531,10 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     def _recipients(self) -> List[str]:
         return []
 
+    def extra_inboxes(self) -> List[str]:
+        """Allows to define inboxes that will be part of of the recipient for every activity."""
+        return []
+
     def recipients(self) -> List[str]:  # noqa: C901
         if BACKEND is None:
             raise UninitializedBackendError
@@ -538,7 +542,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         recipients = self._recipients()
         actor_id = self.get_actor().id
 
-        out: List[str] = []
+        out = self.extra_inboxes()
         for recipient in recipients:
             # if recipient in PUBLIC_INSTANCES:
             #    if recipient not in out:
