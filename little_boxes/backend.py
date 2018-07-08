@@ -2,10 +2,14 @@ import abc
 import binascii
 import os
 import typing
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 import requests
 
 from .__version__ import __version__
+from .collection import parse_collection
 from .errors import ActivityNotFoundError
 from .errors import RemoteActivityGoneError
 from .urlutils import check_url as check_url
@@ -43,6 +47,11 @@ class Backend(abc.ABC):
         resp.raise_for_status()
 
         return resp
+
+    def parse_collection(
+        self, payload: Optional[Dict[str, Any]] = None, url: Optional[str] = None
+    ):
+        return parse_collection(payload=payload, url=url, fetcher=self.fetch_iri)
 
     def is_from_outbox(
         self, as_actor: "ap.Person", activity: "ap.BaseActivity"

@@ -569,9 +569,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
             # Is the activity a `Collection`/`OrderedCollection`?
             elif actor.ACTIVITY_TYPE in COLLECTION_TYPES:
-                for item in parse_collection(
-                    actor.to_dict(), fetcher=BACKEND.fetch_iri
-                ):
+                for item in BACKEND.parse_collection(actor.to_dict()):
                     # XXX(tsileo): is nested collection support needed here?
 
                     if item in [actor_id, AS_PUBLIC]:
