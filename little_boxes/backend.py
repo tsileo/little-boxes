@@ -4,6 +4,7 @@ import os
 import typing
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Optional
 
 import requests
@@ -50,7 +51,7 @@ class Backend(abc.ABC):
 
     def parse_collection(
         self, payload: Optional[Dict[str, Any]] = None, url: Optional[str] = None
-    ):
+    ) -> List[str]:
         return parse_collection(payload=payload, url=url, fetcher=self.fetch_iri)
 
     def is_from_outbox(
