@@ -12,6 +12,8 @@ from typing import Type
 from typing import Union
 
 from .backend import Backend
+from .errors import ActivityNotFoundError
+from .errors import ActivityUnavailableError
 from .errors import BadActivityError
 from .errors import DropActivityPreProcessError
 from .errors import Error
@@ -555,6 +557,10 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             except RemoteActivityGoneError:
                 logger.info(f"{recipient} is gone")
                 continue
+            except ActivityUnavailableError:
+                # TODO(tsileo): retry separately?
+                logger.info(f"failed {recipient} to fetch recipient")
+                continue
 
             if actor.ACTIVITY_TYPE in ACTOR_TYPES:
                 if actor.endpoints:
@@ -575,13 +581,12 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                         continue
 
                     try:
-                        col_actor = fetch_remote_activity(
-                            item, expected=ActivityType.PERSON
-                        )
-                    except UnexpectedActivityTypeError:
-                        logger.exception(f"failed to fetch actor {item!r}")
+                        col_actor = fetch_remote_activity(item)
+                    except ActivityUnavailableError:
+                        # TODO(tsileo): retry separately?
+                        logger.info(f"failed {recipient} to fetch recipient")
                         continue
-                    except RemoteActivityGoneError:
+                    except (RemoteActivityGoneError, ActivityNotFoundError):
                         logger.info(f"{item} is gone")
                         continue
 

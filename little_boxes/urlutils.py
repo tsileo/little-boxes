@@ -4,6 +4,7 @@ import socket
 from typing import Dict
 from urllib.parse import urlparse
 
+from .errors import Error
 from .errors import ServerError
 
 logger = logging.getLogger(__name__)
@@ -13,6 +14,10 @@ _CACHE: Dict[str, bool] = {}
 
 
 class InvalidURLError(ServerError):
+    pass
+
+
+class URLLookupFailedError(Error):
     pass
 
 
@@ -40,7 +45,7 @@ def is_url_valid(url: str, debug: bool = False) -> bool:
         except socket.gaierror:
             logger.exception(f"failed to lookup url {url}")
             _CACHE[parsed.hostname] = False
-            return False
+            raise URLLookupFailedError(f"failed to lookup url {url}")
 
     logger.debug(f"{ip_address}")
 

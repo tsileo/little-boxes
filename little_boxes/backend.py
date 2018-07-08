@@ -1,5 +1,6 @@
 import abc
 import binascii
+import json
 import os
 import typing
 from typing import Any
@@ -12,7 +13,9 @@ import requests
 from .__version__ import __version__
 from .collection import parse_collection
 from .errors import ActivityNotFoundError
+from .errors import ActivityUnavailableError
 from .errors import RemoteActivityGoneError
+from .urlutils import URLLookupFailedError
 from .urlutils import check_url as check_url
 
 if typing.TYPE_CHECKING:
@@ -70,23 +73,45 @@ class Backend(abc.ABC):
         pass  # pragma: no cover
 
     def fetch_iri(self, iri: str, **kwargs) -> "ap.ObjectType":  # pragma: no cover
-        self.check_url(iri)
-        resp = requests.get(
-            iri,
-            headers={
-                "User-Agent": self.user_agent(),
-                "Accept": "application/activity+json",
-            },
-            **kwargs,
-        )
+        try:
+            self.check_url(iri)
+        except URLLookupFailedError:
+            raise ActivityUnavailableError(f"unable to fetch {iri}, url lookup failed")
+
+        try:
+            resp = requests.get(
+                iri,
+                headers={
+                    "User-Agent": self.user_agent(),
+                    "Accept": "application/activity+json",
+                },
+                timeout=15,
+                **kwargs,
+            )
+        except (
+            requests.exceptions.ConnectTimeout,
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.ConnectionError,
+        ):
+            raise ActivityUnavailableError(f"unable to fetch {iri}, connection error")
         if resp.status_code == 404:
             raise ActivityNotFoundError(f"{iri} is not found")
         elif resp.status_code == 410:
             raise RemoteActivityGoneError(f"{iri} is gone")
+        elif resp.status_code in [500, 502, 503]:
+            raise ActivityUnavailableError(
+                f"unable to fetch {iri}, server error ({resp.status_code})"
+            )
 
         resp.raise_for_status()
 
-        return resp.json()
+        try:
+            out = resp.json()
+        except json.JSONDecodeError:
+            # TODO(tsileo): a special error type?
+            raise ActivityUnavailableError(f"{iri} is not JSON")
+
+        return out
 
     @abc.abstractmethod
     def inbox_check_duplicate(self, as_actor: "ap.Person", iri: str) -> bool:

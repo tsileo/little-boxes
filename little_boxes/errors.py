@@ -75,3 +75,9 @@ class RecursionLimitExceededError(BadActivityError):
 
 class UnexpectedActivityTypeError(BadActivityError):
     """Raised when an another activty was expected."""
+
+
+class ActivityUnavailableError(ServerError):
+    """Raises when fetching a remote activity times out."""
+
+    status_code = 503
