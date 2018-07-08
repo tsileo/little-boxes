@@ -12,7 +12,6 @@ from typing import Type
 from typing import Union
 
 from .backend import Backend
-from .collection import parse_collection
 from .errors import BadActivityError
 from .errors import DropActivityPreProcessError
 from .errors import Error
