@@ -19,7 +19,7 @@ def _set_attrs(attrs, new=False):
 
 
 LINKER = Linker(callbacks=[_set_attrs])
-HASHTAG_REGEX = re.compile(r"(#[\d\w\.]+)")
+HASHTAG_REGEX = re.compile(r"(#[\d\w]+)")
 MENTION_REGEX = re.compile(r"@[\d\w_.+-]+@[\d\w-]+\.[\d\w\-.]+")
 
 
