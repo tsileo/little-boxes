@@ -1157,7 +1157,7 @@ class Note(BaseActivity):
             actor=self.get_actor().id, object=Tombstone(id=self.id).to_dict(embed=True)
         )
 
-    def get_tombstone(self, deleted: Optional[str]) -> BaseActivity:
+    def get_tombstone(self, deleted: Optional[str] = None) -> BaseActivity:
         return Tombstone(
             id=self.id, published=self.published, deleted=deleted, updated=deleted
         )
