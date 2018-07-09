@@ -12,9 +12,9 @@ import requests
 
 from .__version__ import __version__
 from .collection import parse_collection
+from .errors import ActivityGoneError
 from .errors import ActivityNotFoundError
 from .errors import ActivityUnavailableError
-from .errors import ActivityGoneError
 from .urlutils import URLLookupFailedError
 from .urlutils import check_url as check_url
 

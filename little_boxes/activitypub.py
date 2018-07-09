@@ -12,13 +12,13 @@ from typing import Type
 from typing import Union
 
 from .backend import Backend
+from .errors import ActivityGoneError
 from .errors import ActivityNotFoundError
 from .errors import ActivityUnavailableError
 from .errors import BadActivityError
 from .errors import DropActivityPreProcessError
 from .errors import Error
 from .errors import NotFromOutboxError
-from .errors import ActivityGoneError
 from .errors import UnexpectedActivityTypeError
 
 logger = logging.getLogger(__name__)
