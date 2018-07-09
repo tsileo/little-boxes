@@ -565,8 +565,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             if actor.ACTIVITY_TYPE in ACTOR_TYPES:
                 if actor.endpoints:
                     shared_inbox = actor.endpoints.get("sharedInbox")
-                    if shared_inbox not in out:
-                        out.append(shared_inbox)
+                    if shared_inbox:
+                        if shared_inbox not in out:
+                            out.append(shared_inbox)
                         continue
 
                 if actor.inbox and actor.inbox not in out:
@@ -592,9 +593,11 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
                     if col_actor.endpoints:
                         shared_inbox = col_actor.endpoints.get("sharedInbox")
-                        if shared_inbox not in out:
-                            out.append(shared_inbox)
+                        if shared_inbox:
+                            if shared_inbox not in out:
+                                out.append(shared_inbox)
                             continue
+
                     if col_actor.inbox and col_actor.inbox not in out:
                         out.append(col_actor.inbox)
             else:
