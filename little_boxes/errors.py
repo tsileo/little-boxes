@@ -8,10 +8,6 @@ class Error(Exception):
     """Base error for exceptions raised by this package."""
 
 
-class RemoteActivityGoneError(Error):
-    """Raised when trying to fetch a remote activity that was deleted."""
-
-
 class DropActivityPreProcessError(Error):
     """Raised in `_pre_process_from_inbox` to notify that we don't want to save the message.
 
@@ -63,6 +59,12 @@ class ActivityNotFoundError(ServerError):
     """Raised when an activity is not found."""
 
     status_code = 404
+
+
+class ActivityGoneError(ServerError):
+    """Raised when trying to fetch a remote activity that was deleted."""
+
+    status_code = 410
 
 
 class BadActivityError(ServerError):

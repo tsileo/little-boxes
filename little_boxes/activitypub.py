@@ -18,7 +18,7 @@ from .errors import BadActivityError
 from .errors import DropActivityPreProcessError
 from .errors import Error
 from .errors import NotFromOutboxError
-from .errors import RemoteActivityGoneError
+from .errors import ActivityGoneError
 from .errors import UnexpectedActivityTypeError
 
 logger = logging.getLogger(__name__)
@@ -553,7 +553,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
             try:
                 actor = fetch_remote_activity(recipient)
-            except RemoteActivityGoneError:
+            except ActivityGoneError:
                 logger.info(f"{recipient} is gone")
                 continue
             except ActivityUnavailableError:
@@ -586,7 +586,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                         # TODO(tsileo): retry separately?
                         logger.info(f"failed {recipient} to fetch recipient")
                         continue
-                    except (RemoteActivityGoneError, ActivityNotFoundError):
+                    except (ActivityGoneError, ActivityNotFoundError):
                         logger.info(f"{item} is gone")
                         continue
 

@@ -14,7 +14,7 @@ from .__version__ import __version__
 from .collection import parse_collection
 from .errors import ActivityNotFoundError
 from .errors import ActivityUnavailableError
-from .errors import RemoteActivityGoneError
+from .errors import ActivityGoneError
 from .urlutils import URLLookupFailedError
 from .urlutils import check_url as check_url
 
@@ -76,6 +76,7 @@ class Backend(abc.ABC):
         try:
             self.check_url(iri)
         except URLLookupFailedError:
+            # The IRI is inaccessible
             raise ActivityUnavailableError(f"unable to fetch {iri}, url lookup failed")
 
         try:
@@ -86,6 +87,7 @@ class Backend(abc.ABC):
                     "Accept": "application/activity+json",
                 },
                 timeout=15,
+                allow_redirects=False,
                 **kwargs,
             )
         except (
@@ -97,7 +99,7 @@ class Backend(abc.ABC):
         if resp.status_code == 404:
             raise ActivityNotFoundError(f"{iri} is not found")
         elif resp.status_code == 410:
-            raise RemoteActivityGoneError(f"{iri} is gone")
+            raise ActivityGoneError(f"{iri} is gone")
         elif resp.status_code in [500, 502, 503]:
             raise ActivityUnavailableError(
                 f"unable to fetch {iri}, server error ({resp.status_code})"
