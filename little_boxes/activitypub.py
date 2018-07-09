@@ -1092,6 +1092,14 @@ class Create(BaseActivity):
 
         BACKEND.outbox_create(as_actor, self)
 
+    def get_tombstone(self, deleted: Optional[str] = None) -> BaseActivity:
+        return Tombstone(
+            id=self.id,
+            published=self.get_object().published,
+            deleted=deleted,
+            updated=deleted,
+        )
+
 
 class Tombstone(BaseActivity):
     ACTIVITY_TYPE = ActivityType.TOMBSTONE
