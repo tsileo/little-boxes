@@ -543,12 +543,11 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         recipients = self._recipients()
         actor_id = self.get_actor().id
 
-        out = self.extra_inboxes()
+        out: List[str] = []
+        if self.type == ActivityType.CREATE.value:
+            out = self.extra_inboxes()
+
         for recipient in recipients:
-            # if recipient in PUBLIC_INSTANCES:
-            #    if recipient not in out:
-            #        out.append(str(recipient))
-            #    continue
             if recipient in [actor_id, AS_PUBLIC, None]:
                 continue
 
