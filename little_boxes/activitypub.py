@@ -150,7 +150,6 @@ def _has_type(
         _type.value if isinstance(_type, ActivityType) else _type
         for _type in _to_list(_types)
     ]
-    print(types_str)
     for _type in _to_list(obj_type):
         if _type in types_str:
             return True
