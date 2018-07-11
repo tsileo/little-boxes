@@ -332,7 +332,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             pass
 
     def _actor_id(self, obj: ObjectOrIDType) -> str:
-        if isinstance(obj, dict) and _has_type(obj["type"], ACTOR_TYPES):  # type: ignore
+        if isinstance(obj, dict) and _has_type(
+            obj["type"], ACTOR_TYPES
+        ):  # type: ignore
             obj_id = obj.get("id")
             if not obj_id:
                 raise BadActivityError(f"missing object id: {obj!r}")
