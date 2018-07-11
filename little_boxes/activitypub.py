@@ -292,7 +292,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     def has_type(
         self, _types: Union[ActivityType, str, List[Union[ActivityType, str]]]
     ):
-        return self._has_type(self._data["type"], _types)
+        return _has_type(self._data["type"], _types)
 
     def ctx(self) -> Any:
         return self.__ctx()
@@ -332,7 +332,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             pass
 
     def _actor_id(self, obj: ObjectOrIDType) -> str:
-        if isinstance(obj, dict) and _has_type(obj["type"], ActivityType.PERSON):
+        if isinstance(obj, dict) and _has_type(obj["type"], ACTOR_TYPES):  # type: ignore
             obj_id = obj.get("id")
             if not obj_id:
                 raise BadActivityError(f"missing object id: {obj!r}")
