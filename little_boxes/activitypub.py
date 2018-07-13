@@ -84,6 +84,9 @@ class ActivityType(Enum):
     ORGANIZATION = "Organization"
     SERVICE = "Service"
 
+    # Others
+    MENTION = "Mention"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -1171,6 +1174,15 @@ class Note(BaseActivity):
         return Tombstone(
             id=self.id, published=self.published, deleted=deleted, updated=deleted
         )
+
+    def has_mention(self, actor_id: str) -> bool:
+        if self.tag is not None:
+            for tag in self.tag:
+                if tag["type"] == ActivityType.MENTION.value:
+                    if tag["href"] == actor_id:
+                        return True
+
+        return False
 
 
 def fetch_remote_activity(

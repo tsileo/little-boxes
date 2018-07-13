@@ -2,11 +2,11 @@ import json
 import logging
 from unittest import mock
 
-import httpretty
 import pytest
-
 from little_boxes import urlutils
 from little_boxes import webfinger
+
+import httpretty
 
 logging.basicConfig(level=logging.DEBUG)
 

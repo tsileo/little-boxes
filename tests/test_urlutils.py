@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-
 from little_boxes import urlutils
 
 

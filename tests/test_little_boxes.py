@@ -1,6 +1,7 @@
 import logging
 
 from little_boxes import activitypub as ap
+
 from test_backend import InMemBackend
 
 logging.basicConfig(level=logging.DEBUG)
