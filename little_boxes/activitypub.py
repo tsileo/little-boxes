@@ -69,6 +69,7 @@ class ActivityType(Enum):
     COLLECTION_PAGE = "CollectionPage"
     COLLECTION = "Collection"
     NOTE = "Note"
+    ARTICLE = "Article"
     ACCEPT = "Accept"
     REJECT = "Reject"
     FOLLOW = "Follow"
@@ -106,11 +107,11 @@ def parse_activity(
 
     if expected and t != expected:
         raise UnexpectedActivityTypeError(
-            f'expected a {expected.name} activity, got a {payload["type"]}'
+            f'expected a {expected.name} activity, got a {payload["type"]}: {payload}'
         )
 
     if t not in _ACTIVITY_CLS:
-        raise BadActivityError(f'unsupported activity type {payload["type"]}')
+        raise BadActivityError(f'unsupported activity type {payload["type"]}: {payload}')
 
     activity = _ACTIVITY_CLS[t](**payload)
 
@@ -823,7 +824,7 @@ class Undo(BaseActivity):
 
 class Like(BaseActivity):
     ACTIVITY_TYPE = ActivityType.LIKE
-    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE]
+    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE]
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
@@ -869,7 +870,7 @@ class Like(BaseActivity):
 
 class Announce(BaseActivity):
     ACTIVITY_TYPE = ActivityType.ANNOUNCE
-    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE]
+    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE]
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
@@ -887,9 +888,9 @@ class Announce(BaseActivity):
         if isinstance(self._data["object"], str) and not self._data[
             "object"
         ].startswith("http"):
-            # TODO(tsileo): actually drop it without storing it and better logging, also move the check somewhere else
             raise DropActivityPreProcessError(
-                f'received an Annouce referencing an OStatus notice ({self._data["object"]}), dropping the message'
+                f'received an Annouce {self.id!r} referencing an OStatus notice ({self._data["object"]}), '
+                f"dropping the message"
             )
 
     def _process_from_inbox(self, as_actor: "Person") -> None:
