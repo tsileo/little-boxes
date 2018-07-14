@@ -1,11 +1,11 @@
 import logging
 
 import pytest
+
 from little_boxes import activitypub as ap
 from little_boxes.collection import parse_collection
 from little_boxes.errors import RecursionLimitExceededError
 from little_boxes.errors import UnexpectedActivityTypeError
-
 from test_backend import InMemBackend
 
 logging.basicConfig(level=logging.DEBUG)

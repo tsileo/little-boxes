@@ -3,7 +3,6 @@ from unittest import mock
 
 from little_boxes import activitypub as ap
 from little_boxes import content_helper
-
 from test_backend import InMemBackend
 
 logging.basicConfig(level=logging.DEBUG)

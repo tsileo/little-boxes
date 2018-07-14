@@ -111,7 +111,9 @@ def parse_activity(
         )
 
     if t not in _ACTIVITY_CLS:
-        raise BadActivityError(f'unsupported activity type {payload["type"]}: {payload}')
+        raise BadActivityError(
+            f'unsupported activity type {payload["type"]}: {payload}'
+        )
 
     activity = _ACTIVITY_CLS[t](**payload)
 
