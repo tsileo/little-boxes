@@ -298,7 +298,23 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     def has_type(
         self, _types: Union[ActivityType, str, List[Union[ActivityType, str]]]
     ):
+        """Return True if the activity has the given type."""
         return _has_type(self._data["type"], _types)
+
+    def get_url(self) -> str:
+        """Returns the url attributes as a str.
+
+        Returns the URL if it's a str, or the href of the first link.
+
+        """
+        if isinstance(self.url, str):
+            return self.url
+        elif isinstance(self.url, dict):
+            if self.url.get("type") != "Link":
+                raise BadActivityError(f"invalid type {self.url}")
+            return str(self.url.get("href"))
+        else:
+            raise BadActivityError(f"invalid type for {self.url}")
 
     def ctx(self) -> Any:
         return self.__ctx()
@@ -623,16 +639,6 @@ class Person(BaseActivity):
     ACTIVITY_TYPE = ActivityType.PERSON
     OBJECT_REQUIRED = False
     ACTOR_REQUIRED = False
-
-    def get_url(self) -> str:
-        if isinstance(self.url, str):
-            return self.url
-        elif isinstance(self.url, dict):
-            if self.url.get("type") != "Link":
-                raise BadActivityError(f"invalid type {self.url}")
-            return str(self.url.get("href"))
-        else:
-            raise BadActivityError(f"invalid type for {self.url}")
 
 
 class Service(Person):
