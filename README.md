@@ -68,6 +68,7 @@ outbox.post(follow)
 ## Projects using Little Boxes
 
  - [microblog.pub](http://github.com/tsileo/microblog.pub) (using MongoDB as a backend)
+ - [pubgate](https://github.com/autogestion/pubgate)
 
 
 ## Contributions
