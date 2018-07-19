@@ -18,11 +18,11 @@ Until a first version is released, the main goal of this framework is to power t
 ## Features
 
  - Database and server agnostic
-   - You need to implement a backend that respond to activiy side-effects
+   - You need to implement a backend that respond to activity side-effects
    - This also mean you're responsible for serving the activities/collections and receiving them
  - ActivityStreams helper classes
    - with Outbox/Inbox abstractions
- - Content helper using Mardown
+ - Content helper using Markdown
    - with helpers for parsing hashtags and linkify content
  - Key (RSA) helper
  - HTTP signature helper
@@ -68,6 +68,7 @@ outbox.post(follow)
 ## Projects using Little Boxes
 
  - [microblog.pub](http://github.com/tsileo/microblog.pub) (using MongoDB as a backend)
+ - [pubgate](https://github.com/autogestion/pubgate)
 
 
 ## Contributions
