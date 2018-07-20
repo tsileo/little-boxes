@@ -557,6 +557,17 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
             BACKEND.post_to_remote_inbox(self.get_actor(), payload, recp)
 
+    def forward(self, recipients: List[str]) -> None:
+        if BACKEND is None:
+            raise UninitializedBackendError
+        logger.debug(f"Forwarding {self!r} to {recipients}")
+        activity = clean_activity(self.to_dict())
+        payload = json.dumps(activity)
+        for recp in recipients:
+            logger.debug(f"forwarding to {recp}")
+
+            BACKEND.post_to_remote_inbox(self.get_actor(), payload, recp)
+
     def _recipients(self) -> List[str]:
         return []
 
