@@ -1053,6 +1053,14 @@ class Create(BaseActivity):
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
+    def is_public(self) -> bool:
+        """Returns True if the activity is addressed to the special "public" collection."""
+        for field in ["to", "cc", "bto", "bcc"]:
+            if field in self._data:
+                if AS_PUBLIC in self._data[field]:
+                    return True
+        return False
+
     def _outbox_set_id(self, uri: str, obj_id: str) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
