@@ -4,4 +4,3 @@ markdown
 pyld
 pycryptodome
 html2text
-mf2py

@@ -46,6 +46,8 @@ class Backend(abc.ABC):
             url,
             headers={"User-Agent": self.user_agent(), "Accept": "application/json"},
             **kwargs,
+            timeout=15,
+            allow_redirects=False,
         )
 
         resp.raise_for_status()
