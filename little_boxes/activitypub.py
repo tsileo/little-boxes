@@ -97,6 +97,8 @@ ACTOR_TYPES = [
     ActivityType.SERVICE,
 ]
 
+CREATE_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE]
+
 COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
 
 
@@ -224,7 +226,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 kwargs.pop("actor")
                 actor = self._validate_actor(actor)
                 self._data["actor"] = actor
-            elif self.ACTIVITY_TYPE == ActivityType.NOTE:
+            elif self.ACTIVITY_TYPE in CREATE_TYPES:
                 if "attributedTo" not in kwargs:
                     raise BadActivityError(f"Note is missing attributedTo")
             else:
@@ -445,7 +447,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         actor = self._data.get("actor")
         if not actor and self.ACTOR_REQUIRED:
             # Quick hack for Note objects
-            if self.ACTIVITY_TYPE == ActivityType.NOTE:
+            if self.ACTIVITY_TYPE in CREATE_TYPES:
                 actor = str(self._data.get("attributedTo"))
             else:
                 raise BadActivityError(f"failed to fetch actor: {self._data!r}")
@@ -834,7 +836,7 @@ class Undo(BaseActivity):
 
 class Like(BaseActivity):
     ACTIVITY_TYPE = ActivityType.LIKE
-    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE]
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
@@ -880,7 +882,7 @@ class Like(BaseActivity):
 
 class Announce(BaseActivity):
     ACTIVITY_TYPE = ActivityType.ANNOUNCE
-    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE]
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
@@ -939,7 +941,7 @@ class Announce(BaseActivity):
 
 class Delete(BaseActivity):
     ACTIVITY_TYPE = ActivityType.DELETE
-    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE, ActivityType.TOMBSTONE]
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES + [ActivityType.TOMBSTONE]
     OBJECT_REQUIRED = True
 
     def _get_actual_object(self) -> BaseActivity:
@@ -1008,7 +1010,7 @@ class Delete(BaseActivity):
 
 class Update(BaseActivity):
     ACTIVITY_TYPE = ActivityType.UPDATE
-    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE, ActivityType.PERSON]
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES + [ActivityType.PERSON]
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
@@ -1047,7 +1049,7 @@ class Update(BaseActivity):
 
 class Create(BaseActivity):
     ACTIVITY_TYPE = ActivityType.CREATE
-    ALLOWED_OBJECT_TYPES = [ActivityType.NOTE]
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
@@ -1196,6 +1198,12 @@ class Note(BaseActivity):
         return False
 
 
+class Article(Note):
+    ACTIVITY_TYPE = ActivityType.ARTICLE
+    ACTOR_REQUIRED = True
+    OBJECT_REQURIED = False
+
+
 def fetch_remote_activity(
     iri: str, expected: Optional[ActivityType] = None
 ) -> BaseActivity:
@@ -1214,7 +1222,7 @@ class Outbox(Box):
                 f"{activity.get_actor()!r} cannot post into {self.actor!r} outbox"
             )
 
-        if activity.ACTIVITY_TYPE == ActivityType.NOTE:
+        if activity.ACTIVITY_TYPE in CREATE_TYPES:
             activity = activity.build_create()
 
         activity.post_to_outbox()
