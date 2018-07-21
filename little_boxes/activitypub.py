@@ -27,7 +27,7 @@ UninitializedBackendError = Error("a backend must be initialized")
 
 # Helper/shortcut for typing
 ObjectType = Dict[str, Any]
-ActorType = Union['Person', 'Application', 'Group', 'Organization', 'Service']
+ActorType = Union["Person", "Application", "Group", "Organization", "Service"]
 ObjectOrIDType = Union[str, ObjectType]
 
 CTX_AS = "https://www.w3.org/ns/activitystreams"
