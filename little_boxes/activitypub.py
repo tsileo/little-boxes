@@ -27,6 +27,7 @@ UninitializedBackendError = Error("a backend must be initialized")
 
 # Helper/shortcut for typing
 ObjectType = Dict[str, Any]
+ActorType = Union['Person', 'Application', 'Group', 'Organization', 'Service']
 ObjectOrIDType = Union[str, ObjectType]
 
 CTX_AS = "https://www.w3.org/ns/activitystreams"
@@ -214,7 +215,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         self.__ctx: Any = {}
 
         self.__obj: Optional["BaseActivity"] = None
-        self.__actor: Optional["Person"] = None
+        self.__actor: Optional[ActorType] = None
 
         # The id may not be present for new activities
         if "id" in kwargs:
@@ -436,7 +437,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         return data
 
-    def get_actor(self) -> "Person":
+    def get_actor(self) -> ActorType:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -456,35 +457,38 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             raise BadActivityError(f"invalid actor: {self._data!r}")
 
         actor_id = self._actor_id(actor)
-        p = Person(**BACKEND.fetch_iri(actor_id))
-        self.__actor = p
-        return p
 
-    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
+        p = parse_activity(BACKEND.fetch_iri(actor_id))
+        if not p.has_type(ACTOR_TYPES):  # type: ignore
+            raise UnexpectedActivityTypeError(f"{p!r} is not an actor")
+        self.__actor = p  # type: ignore
+        return p  # type: ignore
+
+    def _pre_post_to_outbox(self, as_actor: ActorType) -> None:
         raise NotImplementedError
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
     ) -> None:
         raise NotImplementedError
 
-    def _undo_outbox(self, as_actor: "Person") -> None:
+    def _undo_outbox(self, as_actor: ActorType) -> None:
         raise NotImplementedError
 
-    def _pre_process_from_inbox(self, as_actor: "Person") -> None:
+    def _pre_process_from_inbox(self, as_actor: ActorType) -> None:
         raise NotImplementedError
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         raise NotImplementedError
 
-    def _undo_inbox(self, as_actor: "Person") -> None:
+    def _undo_inbox(self, as_actor: ActorType) -> None:
         raise NotImplementedError
 
-    def process_from_inbox(self, as_actor: "Person") -> None:
+    def process_from_inbox(self, as_actor: ActorType) -> None:
         """Process the message posted to `as_actor` inbox."""
         if BACKEND is None:
             raise UninitializedBackendError
@@ -704,7 +708,7 @@ class Image(BaseActivity):
 
 class Follow(BaseActivity):
     ACTIVITY_TYPE = ActivityType.FOLLOW
-    ALLOWED_OBJECT_TYPES = [ActivityType.PERSON]
+    ALLOWED_OBJECT_TYPES = ACTOR_TYPES
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
@@ -717,7 +721,7 @@ class Follow(BaseActivity):
     def _recipients(self) -> List[str]:
         return [self.get_object().id]
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         """Receiving a Follow should trigger an Accept."""
         if BACKEND is None:
             raise UninitializedBackendError
@@ -729,7 +733,7 @@ class Follow(BaseActivity):
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
@@ -737,13 +741,13 @@ class Follow(BaseActivity):
         # XXX The new_following event will be triggered by Accept
         pass
 
-    def _undo_inbox(self, as_actor: "Person") -> None:
+    def _undo_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
         BACKEND.undo_new_follower(as_actor, self)
 
-    def _undo_outbox(self, as_actor: "Person") -> None:
+    def _undo_outbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -765,11 +769,11 @@ class Accept(BaseActivity):
     def _recipients(self) -> List[str]:
         return [self.get_object().get_actor().id]
 
-    def _pre_process_from_inbox(self, as_actor: "Person") -> None:
+    def _pre_process_from_inbox(self, as_actor: ActorType) -> None:
         # FIXME(tsileo): ensure the actor match the object actor
         pass
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -797,14 +801,14 @@ class Undo(BaseActivity):
             # TODO(tsileo): handle like and announce
             raise Exception("TODO")
 
-    def _pre_process_from_inbox(self, as_actor: "Person") -> None:
+    def _pre_process_from_inbox(self, as_actor: ActorType) -> None:
         """Ensures an Undo activity comes from the same actor as the updated activity."""
         obj = self.get_object()
         actor = self.get_actor()
         if actor.id != obj.get_actor().id:
             raise BadActivityError(f"{actor!r} cannot update {obj!r}")
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         obj = self.get_object()
         # FIXME(tsileo): move this to _undo_inbox impl
         # DB.inbox.update_one({'remote_id': obj.id}, {'$set': {'meta.undo': True}})
@@ -814,7 +818,7 @@ class Undo(BaseActivity):
         except NotImplementedError:
             pass
 
-    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
+    def _pre_post_to_outbox(self, as_actor: ActorType) -> None:
         """Ensures an Undo activity references an activity owned by the instance."""
         if BACKEND is None:
             raise UninitializedBackendError
@@ -824,7 +828,7 @@ class Undo(BaseActivity):
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
@@ -854,13 +858,13 @@ class Like(BaseActivity):
     def _recipients(self) -> List[str]:
         return [self.get_object().get_actor().id]
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
         BACKEND.inbox_like(as_actor, self)
 
-    def _undo_inbox(self, as_actor: "Person") -> None:
+    def _undo_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -868,7 +872,7 @@ class Like(BaseActivity):
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
@@ -878,7 +882,7 @@ class Like(BaseActivity):
 
         BACKEND.outbox_like(as_actor, self)
 
-    def _undo_outbox(self, as_actor: "Person") -> None:
+    def _undo_outbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -906,7 +910,7 @@ class Announce(BaseActivity):
 
         return list(set(recipients))
 
-    def _pre_process_from_inbox(self, as_actor: "Person") -> None:
+    def _pre_process_from_inbox(self, as_actor: ActorType) -> None:
         # XXX(tsileo): Mastodon will try to send Announce for OStatus only acitivities which we cannot parse
         if isinstance(self._data["object"], str) and not self._data[
             "object"
@@ -916,13 +920,13 @@ class Announce(BaseActivity):
                 f"dropping the message"
             )
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
         BACKEND.inbox_announce(as_actor, self)
 
-    def _undo_inbox(self, as_actor: "Person") -> None:
+    def _undo_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -930,7 +934,7 @@ class Announce(BaseActivity):
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
@@ -940,7 +944,7 @@ class Announce(BaseActivity):
 
         BACKEND.outbox_announce(as_actor, self)
 
-    def _undo_outbox(self, as_actor: "Person") -> None:
+    def _undo_outbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -977,7 +981,7 @@ class Delete(BaseActivity):
         obj = self._get_actual_object()
         return obj._recipients()
 
-    def _pre_process_from_inbox(self, as_actor: "Person") -> None:
+    def _pre_process_from_inbox(self, as_actor: ActorType) -> None:
         """Ensures a Delete activity comes from the same actor as the deleted activity."""
         pass
         # FIXME(tsileo): this should be done by the backend I think
@@ -987,14 +991,14 @@ class Delete(BaseActivity):
         # if obj.ACTIVITY_TYPE != ActivityType.TOMBSTONE and actor.id != obj.get_actor().id:
         #    raise BadActivityError(f"{actor!r} cannot delete {obj!r}")
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
         BACKEND.inbox_delete(as_actor, self)
         # FIXME(tsileo): handle the delete_threads here?
 
-    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
+    def _pre_post_to_outbox(self, as_actor: ActorType) -> None:
         """Ensures the Delete activity references a activity from the outbox (i.e. owned by the instance)."""
         if BACKEND is None:
             raise UninitializedBackendError
@@ -1008,7 +1012,7 @@ class Delete(BaseActivity):
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
@@ -1021,24 +1025,24 @@ class Delete(BaseActivity):
 
 class Update(BaseActivity):
     ACTIVITY_TYPE = ActivityType.UPDATE
-    ALLOWED_OBJECT_TYPES = CREATE_TYPES + [ActivityType.PERSON]
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES + ACTOR_TYPES
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
-    def _pre_process_from_inbox(self, as_actor: "Person") -> None:
+    def _pre_process_from_inbox(self, as_actor: ActorType) -> None:
         """Ensures an Update activity comes from the same actor as the updated activity."""
         obj = self.get_object()
         actor = self.get_actor()
         if actor.id != obj.get_actor().id:
             raise BadActivityError(f"{actor!r} cannot update {obj!r}")
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
         BACKEND.inbox_update(as_actor, self)
 
-    def _pre_post_to_outbox(self, as_actor: "Person") -> None:
+    def _pre_post_to_outbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -1047,7 +1051,7 @@ class Update(BaseActivity):
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
@@ -1111,7 +1115,7 @@ class Create(BaseActivity):
 
         return recipients
 
-    def _process_from_inbox(self, as_actor: "Person") -> None:
+    def _process_from_inbox(self, as_actor: ActorType) -> None:
         if BACKEND is None:
             raise UninitializedBackendError
 
@@ -1119,7 +1123,7 @@ class Create(BaseActivity):
 
     def _post_to_outbox(
         self,
-        as_actor: "Person",
+        as_actor: ActorType,
         obj_id: str,
         activity: ObjectType,
         recipients: List[str],
@@ -1185,10 +1189,10 @@ class Note(BaseActivity):
 
         return create
 
-    def build_like(self, as_actor: "Person") -> BaseActivity:
+    def build_like(self, as_actor: ActorType) -> BaseActivity:
         return Like(object=self.id, actor=as_actor.id)
 
-    def build_announce(self, as_actor: "Person") -> BaseActivity:
+    def build_announce(self, as_actor: ActorType) -> BaseActivity:
         return Announce(
             actor=as_actor.id,
             object=self.id,
@@ -1230,7 +1234,7 @@ def fetch_remote_activity(
 
 
 class Box(object):
-    def __init__(self, actor: Person) -> None:
+    def __init__(self, actor: ActorType) -> None:
         self.actor = actor
 
 
