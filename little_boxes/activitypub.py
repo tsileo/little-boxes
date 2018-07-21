@@ -1246,13 +1246,6 @@ class Outbox(Box):
 
         activity.post_to_outbox()
 
-    def get(self, activity_iri: str) -> BaseActivity:
-        pass
-
-    def collection(self):
-        # TODO(tsileo): figure out an API
-        pass
-
 
 class Inbox(Box):
     def post(self, activity: BaseActivity) -> None:
