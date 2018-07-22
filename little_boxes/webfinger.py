@@ -32,6 +32,7 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:
 
     # Security check on the url (like not calling localhost)
     check_url(f"https://{host}")
+    is_404 = False
 
     for i, proto in enumerate(protos):
         try:
@@ -44,10 +45,11 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:
                 continue
             break
         except requests.HTTPError as http_error:
-            if http_error.resp.status_code == 404:
+            if http_error.response.status_code == 404:
+                is_404 = True
                 continue
             raise
-    if resp.status_code == 404:
+    if is_404:
         return None
     resp.raise_for_status()
     return resp.json()
