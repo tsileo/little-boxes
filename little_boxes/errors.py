@@ -83,3 +83,10 @@ class ActivityUnavailableError(ServerError):
     """Raises when fetching a remote activity times out."""
 
     status_code = 503
+
+
+class NotAnActivityError(ServerError):
+    """Raised when no JSON can be decoded.
+
+    Most likely raised when stumbling upon a OStatus notice or failed lookup.
+    """

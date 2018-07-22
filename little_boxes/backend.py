@@ -14,6 +14,7 @@ from .__version__ import __version__
 from .collection import parse_collection
 from .errors import ActivityGoneError
 from .errors import ActivityNotFoundError
+from .errors import NotAnActivityError
 from .errors import ActivityUnavailableError
 from .urlutils import URLLookupFailedError
 from .urlutils import check_url as check_url
@@ -75,6 +76,9 @@ class Backend(abc.ABC):
         pass  # pragma: no cover
 
     def fetch_iri(self, iri: str, **kwargs) -> "ap.ObjectType":  # pragma: no cover
+        if not iri.startswith('http'):
+            raise NotAnActivityError(f"{iri} is not a valid IRI")
+
         try:
             self.check_url(iri)
         except URLLookupFailedError:
@@ -111,9 +115,9 @@ class Backend(abc.ABC):
 
         try:
             out = resp.json()
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, ValueError):
             # TODO(tsileo): a special error type?
-            raise ActivityUnavailableError(f"{iri} is not JSON")
+            raise NotAnActivityError(f"{iri} is not JSON")
 
         return out
 

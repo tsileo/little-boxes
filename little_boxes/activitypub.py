@@ -37,7 +37,11 @@ AS_PUBLIC = "https://www.w3.org/ns/activitystreams#Public"
 COLLECTION_CTX = [
     "https://www.w3.org/ns/activitystreams",
     "https://w3id.org/security/v1",
-    {"Hashtag": "as:Hashtag", "sensitive": "as:sensitive"},
+    {
+        "Hashtag": "as:Hashtag",
+        "sensitive": "as:sensitive",
+        "toot": "http://joinmastodon.org/ns#",
+    },
 ]
 
 # Will be used to keep track of all the defined activities
