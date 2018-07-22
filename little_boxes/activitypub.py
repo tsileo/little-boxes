@@ -34,13 +34,14 @@ CTX_AS = "https://www.w3.org/ns/activitystreams"
 CTX_SECURITY = "https://w3id.org/security/v1"
 AS_PUBLIC = "https://www.w3.org/ns/activitystreams#Public"
 
-COLLECTION_CTX = [
+DEFAULT_CTX = COLLECTION_CTX = [
     "https://www.w3.org/ns/activitystreams",
     "https://w3id.org/security/v1",
     {
         "Hashtag": "as:Hashtag",
         "sensitive": "as:sensitive",
         "toot": "http://joinmastodon.org/ns#",
+        "featured": "toot:featured",
     },
 ]
 
@@ -275,9 +276,16 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         if isinstance(self._data["@context"][-1], dict):
             self._data["@context"][-1]["Hashtag"] = "as:Hashtag"
             self._data["@context"][-1]["sensitive"] = "as:sensitive"
+            self._data["@context"][-1]["toot"] = "http://joinmastodon.org/ns#"
+            self._data["@context"][-1]["featured"] = "toot:featured"
         else:
             self._data["@context"].append(
-                {"Hashtag": "as:Hashtag", "sensitive": "as:sensitive"}
+                {
+                    "Hashtag": "as:Hashtag",
+                    "sensitive": "as:sensitive",
+                    "toot": "http://joinmastodon.org/ns#",
+                    "featured": "toot:featured",
+                }
             )
 
         # FIXME(tsileo): keys required for some subclasses?
