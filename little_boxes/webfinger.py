@@ -45,7 +45,7 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:
                 continue
             break
         except requests.HTTPError as http_error:
-            if http_error.response.status_code == 404:
+            if http_error.response.status_code in [403, 404]:
                 is_404 = True
                 continue
             raise
