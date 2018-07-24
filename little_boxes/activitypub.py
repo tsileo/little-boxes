@@ -38,10 +38,17 @@ DEFAULT_CTX = COLLECTION_CTX = [
     "https://www.w3.org/ns/activitystreams",
     "https://w3id.org/security/v1",
     {
+        # AS ext
         "Hashtag": "as:Hashtag",
         "sensitive": "as:sensitive",
+        "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+        # toot
         "toot": "http://joinmastodon.org/ns#",
         "featured": "toot:featured",
+        # schema
+        "schema": "http://schema.org#",
+        "PropertyValue": "schema:PropertyValue",
+        "value": "schema:value",
     },
 ]
 
