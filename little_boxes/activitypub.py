@@ -488,7 +488,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         out: List[str] = []
         if self.type == ActivityType.CREATE.value:
-            out = self.extra_inboxes()
+            out = BACKEND.extra_inboxes()
 
         for recipient in recipients:
             if recipient in [actor_id, AS_PUBLIC, None]:
