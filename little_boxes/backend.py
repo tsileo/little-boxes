@@ -60,6 +60,10 @@ class Backend(abc.ABC):
     ) -> List[str]:
         return parse_collection(payload=payload, url=url, fetcher=self.fetch_iri)
 
+    def extra_inboxes(self) -> List[str]:
+        """Allows to define inboxes that will be part of of the recipient for every activity."""
+        return []
+
     def is_from_outbox(
         self, as_actor: "ap.Person", activity: "ap.BaseActivity"
     ) -> bool:
