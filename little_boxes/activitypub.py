@@ -728,7 +728,8 @@ class Create(BaseActivity):
 
         # FIXME(tsileo): add a BACKEND.note_activity_url, and pass the actor to both
         self._data["object"]["id"] = uri + "/activity"
-        self._data["object"]["url"] = BACKEND.note_url(obj_id)
+        if "url" not in self._data["object"]:
+            self._data["object"]["url"] = BACKEND.note_url(obj_id)
         if isinstance(self.ctx(), Note):
             try:
                 self.ctx().id = self._data["object"]["id"]
