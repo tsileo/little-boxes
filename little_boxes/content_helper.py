@@ -3,7 +3,6 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
-from bleach.linkifier import Linker
 from markdown import markdown
 
 from .activitypub import get_backend
@@ -18,7 +17,6 @@ def _set_attrs(attrs, new=False):
     return attrs
 
 
-LINKER = Linker(callbacks=[_set_attrs])
 HASHTAG_REGEX = re.compile(r"(#[\d\w]+)")
 MENTION_REGEX = re.compile(r"@[\d\w_.+-]+@[\d\w-]+\.[\d\w\-.]+")
 
@@ -51,10 +49,9 @@ def mentionify(content: str) -> Tuple[str, List[Dict[str, str]]]:
 
 def parse_markdown(content: str) -> Tuple[str, List[Dict[str, str]]]:
     tags = []
-    content = LINKER.linkify(content)
     content, hashtag_tags = hashtagify(content)
     tags.extend(hashtag_tags)
     content, mention_tags = mentionify(content)
     tags.extend(mention_tags)
-    content = markdown(content)
+    content = markdown(content, extensions=["mdx_linkify"])
     return content, tags

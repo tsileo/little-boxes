@@ -1,3 +1,4 @@
+mdx_linkify
 bleach
 requests
 markdown
