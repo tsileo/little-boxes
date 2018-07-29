@@ -21,7 +21,15 @@ REQUIRES_PYTHON = ">=3.6.0"
 VERSION = None
 
 
-REQUIRED = ["requests", "markdown", "bleach", "pyld", "pycryptodome", "html2text", "mdx_linkify"]
+REQUIRED = [
+    "requests",
+    "markdown",
+    "bleach",
+    "pyld",
+    "pycryptodome",
+    "html2text",
+    "mdx_linkify",
+]
 
 DEPENDENCY_LINKS = []
 
