@@ -227,7 +227,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         self.__ctx: Any = {}
 
         self.__obj: Optional["BaseActivity"] = None
-        self.__actor: Optional[ActorType] = None
+        self.__actor: Optional[List[ActorType]] = None
 
         # The id may not be present for new activities
         if "id" in kwargs:
@@ -461,27 +461,31 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             raise UninitializedBackendError
 
         if self.__actor:
-            return self.__actor
+            return self.__actor[0]
 
-        # FIXME(tsileo): cache the actor (same way as get_object)
         actor = self._data.get("actor")
         if not actor and self.ACTOR_REQUIRED:
             # Quick hack for Note objects
             if self.ACTIVITY_TYPE in CREATE_TYPES:
-                actor = str(self._data.get("attributedTo"))
+                actor = self._data.get("attributedTo")
+                if not actor:
+                    raise BadActivityError(f"missing attributedTo")
             else:
                 raise BadActivityError(f"failed to fetch actor: {self._data!r}")
 
-        if not isinstance(actor, (str, dict)):
-            raise BadActivityError(f"invalid actor: {self._data!r}")
+        self.__actor: List[ActorType] = []
+        for item in _to_list(actor):
+            if not isinstance(item, (str, dict)):
+                raise BadActivityError(f"invalid actor: {self._data!r}")
 
-        actor_id = self._actor_id(actor)
+            actor_id = self._actor_id(item)
 
-        p = parse_activity(BACKEND.fetch_iri(actor_id))
-        if not p.has_type(ACTOR_TYPES):  # type: ignore
-            raise UnexpectedActivityTypeError(f"{p!r} is not an actor")
-        self.__actor = p  # type: ignore
-        return p  # type: ignore
+            p = parse_activity(BACKEND.fetch_iri(actor_id))
+            if not p.has_type(ACTOR_TYPES):  # type: ignore
+                raise UnexpectedActivityTypeError(f"{p!r} is not an actor")
+            self.__actor.append(p)  # type: ignore
+
+        return self.__actor[0]
 
     def _pre_post_to_outbox(self, as_actor: ActorType) -> None:
         raise NotImplementedError

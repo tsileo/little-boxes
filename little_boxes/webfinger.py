@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 from typing import Dict
@@ -12,7 +13,7 @@ from .urlutils import check_url
 logger = logging.getLogger(__name__)
 
 
-def webfinger(resource: str) -> Optional[Dict[str, Any]]:
+def webfinger(resource: str) -> Optional[Dict[str, Any]]:  # noqa: C901
     """Mastodon-like WebFinger resolution to retrieve the activity stream Actor URL.
     """
     logger.info(f"performing webfinger resolution for {resource}")
@@ -40,11 +41,13 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:
             # FIXME(tsileo): BACKEND.fetch_json so we can set a UserAgent
             resp = get_backend().fetch_json(url, params={"resource": resource})
         except requests.ConnectionError:
+            logger.exception("req failed")
             # If we tried https first and the domain is "http only"
             if i == 0:
                 continue
             break
         except requests.HTTPError as http_error:
+            logger.exception("HTTP error")
             if http_error.response.status_code in [403, 404]:
                 is_404 = True
                 continue
@@ -52,7 +55,10 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:
     if is_404:
         return None
     resp.raise_for_status()
-    return resp.json()
+    try:
+        return resp.json()
+    except json.JSONDecodeError:
+        return None
 
 
 def get_remote_follow_template(resource: str) -> Optional[str]:
