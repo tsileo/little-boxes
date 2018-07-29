@@ -619,18 +619,6 @@ class Accept(BaseActivity):
     def _recipients(self) -> List[str]:
         return [self.get_object().get_actor().id]
 
-    def _pre_process_from_inbox(self, as_actor: ActorType) -> None:
-        # FIXME(tsileo): ensure the actor match the object actor
-        pass
-
-    def _process_from_inbox(self, as_actor: ActorType) -> None:
-        if BACKEND is None:
-            raise UninitializedBackendError
-
-        o = self.get_object()
-        if isinstance(o, Follow):
-            BACKEND.new_following(as_actor, o)
-
 
 class Undo(BaseActivity):
     ACTIVITY_TYPE = ActivityType.UNDO
