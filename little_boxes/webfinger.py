@@ -40,6 +40,7 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:  # noqa: C901
             url = f"{proto}://{host}/.well-known/webfinger"
             # FIXME(tsileo): BACKEND.fetch_json so we can set a UserAgent
             resp = get_backend().fetch_json(url, params={"resource": resource})
+            break
         except requests.ConnectionError:
             logger.exception("req failed")
             # If we tried https first and the domain is "http only"
