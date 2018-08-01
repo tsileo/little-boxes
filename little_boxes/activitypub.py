@@ -10,7 +10,6 @@ from typing import Optional
 from typing import Type
 from typing import Union
 
-from .key import Key
 from .backend import Backend
 from .errors import ActivityGoneError
 from .errors import ActivityNotFoundError
@@ -18,6 +17,7 @@ from .errors import ActivityUnavailableError
 from .errors import BadActivityError
 from .errors import Error
 from .errors import UnexpectedActivityTypeError
+from .key import Key
 
 logger = logging.getLogger(__name__)
 
