@@ -10,6 +10,7 @@ from typing import Optional
 from typing import Type
 from typing import Union
 
+from .key import Key
 from .backend import Backend
 from .errors import ActivityGoneError
 from .errors import ActivityNotFoundError
@@ -552,6 +553,9 @@ class Person(BaseActivity):
     ACTIVITY_TYPE = ActivityType.PERSON
     OBJECT_REQUIRED = False
     ACTOR_REQUIRED = False
+
+    def get_key(self) -> Key:
+        return Key.from_dict(self.publicKey)
 
 
 class Service(Person):
