@@ -400,6 +400,19 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         return actor["id"]
 
+    def get_object_id(self) -> str:
+        if BACKEND is None:
+            raise UninitializedBackendError
+
+        if self.__obj:
+            return self.__obj.id
+        if isinstance(self._data["object"], dict):
+            return self._data["object"]["id"]
+        elif isinstance(self._data["object"], str):
+            return self._data["object"]
+        else:
+            raise ValueError(f"invalid object {self._data['object']}")
+
     def get_object(self) -> "BaseActivity":
         """Returns the object as a BaseActivity instance."""
         if BACKEND is None:
