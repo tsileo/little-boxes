@@ -74,7 +74,7 @@ def get_remote_follow_template(resource: str, debug: bool = False) -> Optional[s
     return None
 
 
-def get_actor_url(resource: strm, debug: bool = False) -> Optional[str]:
+def get_actor_url(resource: str, debug: bool = False) -> Optional[str]:
     """Mastodon-like WebFinger resolution to retrieve the activity stream Actor URL.
 
     Returns:
