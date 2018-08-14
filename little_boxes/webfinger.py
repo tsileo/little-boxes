@@ -64,8 +64,8 @@ def webfinger(
         return None
 
 
-def get_remote_follow_template(resource: str) -> Optional[str]:
-    data = webfinger(resource)
+def get_remote_follow_template(resource: str, debug: bool = False) -> Optional[str]:
+    data = webfinger(resource, debug=debug)
     if data is None:
         return None
     for link in data["links"]:
@@ -74,13 +74,13 @@ def get_remote_follow_template(resource: str) -> Optional[str]:
     return None
 
 
-def get_actor_url(resource: str) -> Optional[str]:
+def get_actor_url(resource: strm, debug: bool = False) -> Optional[str]:
     """Mastodon-like WebFinger resolution to retrieve the activity stream Actor URL.
 
     Returns:
         the Actor URL or None if the resolution failed.
     """
-    data = webfinger(resource)
+    data = webfinger(resource, debug=debug)
     if data is None:
         return None
     for link in data["links"]:
