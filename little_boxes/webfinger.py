@@ -13,7 +13,9 @@ from .urlutils import check_url
 logger = logging.getLogger(__name__)
 
 
-def webfinger(resource: str) -> Optional[Dict[str, Any]]:  # noqa: C901
+def webfinger(
+    resource: str, debug: bool = False
+) -> Optional[Dict[str, Any]]:  # noqa: C901
     """Mastodon-like WebFinger resolution to retrieve the activity stream Actor URL.
     """
     logger.info(f"performing webfinger resolution for {resource}")
@@ -32,7 +34,7 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:  # noqa: C901
         resource = "acct:" + resource
 
     # Security check on the url (like not calling localhost)
-    check_url(f"https://{host}")
+    check_url(f"https://{host}", debug=debug)
     is_404 = False
 
     for i, proto in enumerate(protos):
