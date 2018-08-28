@@ -17,6 +17,8 @@ from Crypto.Signature import PKCS1_v1_5
 from requests.auth import AuthBase
 
 from .activitypub import get_backend
+from .errors import ActivityNotFoundError
+from .errors import ActivityGoneError
 from .key import Key
 
 logger = logging.getLogger(__name__)
@@ -76,7 +78,11 @@ def verify_request(method: str, path: str, headers: Any, body: str) -> bool:
         hsig["headers"], method, path, headers, _body_digest(body)
     )
 
-    k = _get_public_key(hsig["keyId"])
+    try:
+        k = _get_public_key(hsig["keyId"])
+    except (ActivityGoneError, ActivityNotFoundError):
+        logger.debug("cannot get public key")
+        return False
     if k.key_id() != hsig["keyId"]:
         return False
 

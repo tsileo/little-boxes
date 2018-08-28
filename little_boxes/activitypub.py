@@ -692,7 +692,7 @@ class Announce(BaseActivity):
 
 class Delete(BaseActivity):
     ACTIVITY_TYPE = ActivityType.DELETE
-    ALLOWED_OBJECT_TYPES = CREATE_TYPES + [ActivityType.TOMBSTONE]
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES + ACTOR_TYPES + [ActivityType.TOMBSTONE]
     OBJECT_REQUIRED = True
 
     def _get_actual_object(self) -> BaseActivity:
