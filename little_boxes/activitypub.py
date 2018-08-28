@@ -643,6 +643,7 @@ class Undo(BaseActivity):
         ActivityType.FOLLOW,
         ActivityType.LIKE,
         ActivityType.ANNOUNCE,
+        ActivityType.BLOCK,
     ]
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
