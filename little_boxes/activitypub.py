@@ -342,6 +342,8 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                     raise BadActivityError(f"invalid type {link}")
                 if link.get("mimeType").startswith(preferred_mimetype):
                     return link.get("href")
+            if not last_link:
+                raise BadActivityError(f"invalid type for {self.url}")
             return last_link
         else:
             raise BadActivityError(f"invalid type for {self.url}")
