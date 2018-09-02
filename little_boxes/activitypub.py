@@ -75,17 +75,23 @@ class ActivityType(Enum):
     LIKE = "Like"
     CREATE = "Create"
     UPDATE = "Update"
+
     ORDERED_COLLECTION = "OrderedCollection"
     ORDERED_COLLECTION_PAGE = "OrderedCollectionPage"
     COLLECTION_PAGE = "CollectionPage"
     COLLECTION = "Collection"
+
     NOTE = "Note"
     ARTICLE = "Article"
+    VIDEO = "Video"
+
     ACCEPT = "Accept"
     REJECT = "Reject"
     FOLLOW = "Follow"
+
     DELETE = "Delete"
     UNDO = "Undo"
+
     IMAGE = "Image"
     TOMBSTONE = "Tombstone"
 
@@ -108,7 +114,7 @@ ACTOR_TYPES = [
     ActivityType.SERVICE,
 ]
 
-CREATE_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE]
+CREATE_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE, ActivityType.VIDEO]
 
 COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
 
@@ -316,7 +322,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         """Return True if the activity has the given type."""
         return _has_type(self._data["type"], _types)
 
-    def get_url(self) -> str:
+    def get_url(self, preferred_mimetype: str = "text/html") -> str:
         """Returns the url attributes as a str.
 
         Returns the URL if it's a str, or the href of the first link.
@@ -328,6 +334,15 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             if self.url.get("type") != "Link":
                 raise BadActivityError(f"invalid type {self.url}")
             return str(self.url.get("href"))
+        elif isinstance(self.url, list):
+            last_link = None
+            for link in self.url:
+                last_link = link
+                if link.get("type") != "Link":
+                    raise BadActivityError(f"invalid type {link}")
+                if link.get("mimeType").startswith(preferred_mimetype):
+                    return link.get("href")
+            return last_link
         else:
             raise BadActivityError(f"invalid type for {self.url}")
 
@@ -851,6 +866,12 @@ class Note(BaseActivity):
 
 class Article(Note):
     ACTIVITY_TYPE = ActivityType.ARTICLE
+    ACTOR_REQUIRED = True
+    OBJECT_REQURIED = False
+
+
+class Video(Note):
+    ACTIVITY_TYPE = ActivityType.VIDEO
     ACTOR_REQUIRED = True
     OBJECT_REQURIED = False
 
