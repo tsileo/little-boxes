@@ -859,9 +859,12 @@ class Note(BaseActivity):
     def has_mention(self, actor_id: str) -> bool:
         if self.tag is not None:
             for tag in self.tag:
-                if tag["type"] == ActivityType.MENTION.value:
-                    if tag["href"] == actor_id:
-                        return True
+                try:
+                    if tag["type"] == ActivityType.MENTION.value:
+                        if tag["href"] == actor_id:
+                            return True
+                except Exception:
+                    logger.exception(f"invalid tag {tag!r}")
 
         return False
 
