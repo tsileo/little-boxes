@@ -122,6 +122,9 @@ COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
 def parse_activity(
     payload: ObjectType, expected: Optional[ActivityType] = None
 ) -> "BaseActivity":
+    if "type" not in payload:
+        raise BadActivityError(f"the payload has no type: {payload!r}")
+
     t = ActivityType(_to_list(payload["type"])[0])
 
     if expected and t != expected:
