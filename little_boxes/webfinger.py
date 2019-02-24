@@ -13,7 +13,9 @@ from .urlutils import check_url
 logger = logging.getLogger(__name__)
 
 
-def webfinger(resource: str) -> Optional[Dict[str, Any]]:  # noqa: C901
+def webfinger(
+    resource: str, debug: bool = False
+) -> Optional[Dict[str, Any]]:  # noqa: C901
     """Mastodon-like WebFinger resolution to retrieve the activity stream Actor URL.
     """
     logger.info(f"performing webfinger resolution for {resource}")
@@ -32,7 +34,7 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:  # noqa: C901
         resource = "acct:" + resource
 
     # Security check on the url (like not calling localhost)
-    check_url(f"https://{host}")
+    check_url(f"https://{host}", debug=debug)
     is_404 = False
 
     for i, proto in enumerate(protos):
@@ -62,8 +64,8 @@ def webfinger(resource: str) -> Optional[Dict[str, Any]]:  # noqa: C901
         return None
 
 
-def get_remote_follow_template(resource: str) -> Optional[str]:
-    data = webfinger(resource)
+def get_remote_follow_template(resource: str, debug: bool = False) -> Optional[str]:
+    data = webfinger(resource, debug=debug)
     if data is None:
         return None
     for link in data["links"]:
@@ -72,13 +74,13 @@ def get_remote_follow_template(resource: str) -> Optional[str]:
     return None
 
 
-def get_actor_url(resource: str) -> Optional[str]:
+def get_actor_url(resource: str, debug: bool = False) -> Optional[str]:
     """Mastodon-like WebFinger resolution to retrieve the activity stream Actor URL.
 
     Returns:
         the Actor URL or None if the resolution failed.
     """
-    data = webfinger(resource)
+    data = webfinger(resource, debug=debug)
     if data is None:
         return None
     for link in data["links"]:
