@@ -59,10 +59,10 @@ def _doc_hash(doc):
 def verify_signature(doc, key: "Key"):
     to_be_signed = _options_hash(doc) + _doc_hash(doc)
     signature = doc["signature"]["signatureValue"]
-    signer = PKCS1_v1_5.new(key.pubkey or key.privkey)
+    signer = PKCS1_v1_5.new(key.pubkey or key.privkey)  # type: ignore
     digest = SHA256.new()
     digest.update(to_be_signed.encode("utf-8"))
-    return signer.verify(digest, base64.b64decode(signature))
+    return signer.verify(digest, base64.b64decode(signature))  # type: ignore
 
 
 def generate_signature(doc, key: "Key"):
@@ -73,8 +73,11 @@ def generate_signature(doc, key: "Key"):
     }
     doc["signature"] = options
     to_be_signed = _options_hash(doc) + _doc_hash(doc)
+    if not key.privkey:
+        raise ValueError(f"missing privkey on key {key!r}")
+
     signer = PKCS1_v1_5.new(key.privkey)
     digest = SHA256.new()
     digest.update(to_be_signed.encode("utf-8"))
-    sig = base64.b64encode(signer.sign(digest))
+    sig = base64.b64encode(signer.sign(digest))  # type: ignore
     options["signatureValue"] = sig.decode("utf-8")

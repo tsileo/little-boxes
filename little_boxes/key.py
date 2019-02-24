@@ -14,8 +14,8 @@ class Key(object):
         self.owner = owner
         self.privkey_pem: Optional[str] = None
         self.pubkey_pem: Optional[str] = None
-        self.privkey: Optional[Any] = None
-        self.pubkey: Optional[Any] = None
+        self.privkey: Optional[RSA.RsaKey] = None
+        self.pubkey: Optional[RSA.RsaKey] = None
         self.id_ = id_
 
     def load_pub(self, pubkey_pem: str) -> None:
