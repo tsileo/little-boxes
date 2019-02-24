@@ -5,3 +5,4 @@ markdown
 pyld
 pycryptodome
 html2text
+regex
