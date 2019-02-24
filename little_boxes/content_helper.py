@@ -1,9 +1,10 @@
-import re
 from typing import Dict
 from typing import List
 from typing import Tuple
 
 from markdown import markdown
+
+import regex as re
 
 from .activitypub import get_backend
 from .webfinger import get_actor_url
@@ -24,7 +25,11 @@ MENTION_REGEX = re.compile(r"@[\d\w_.+-]+@[\d\w-]+\.[\d\w\-.]+")
 def hashtagify(content: str) -> Tuple[str, List[Dict[str, str]]]:
     base_url = get_backend().base_url()
     tags = []
-    for hashtag in re.findall(HASHTAG_REGEX, content):
+    hashtags = re.findall(HASHTAG_REGEX, content)
+    hashtags = list(set(hashtags))  # unique tags
+    hashtags.sort()
+    hashtags.reverse()  # replace longest tag first
+    for hashtag in hashtags:
         tag = hashtag[1:]
         link = f'<a href="{base_url}/tags/{tag}" class="mention hashtag" rel="tag">#<span>{tag}</span></a>'
         tags.append(dict(href=f"{base_url}/tags/{tag}", name=hashtag, type="Hashtag"))
