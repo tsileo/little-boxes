@@ -40,7 +40,7 @@ def test_webfinger(_, _1):
     # FIXME(tsileo): it should try https first
     httpretty.register_uri(
         httpretty.GET,
-        "http://microblog.pub/.well-known/webfinger",
+        "https://microblog.pub/.well-known/webfinger",
         body=json.dumps(_WEBFINGER_RESP),
     )
     data = webfinger.webfinger("@dev@microblog.pub")
