@@ -29,7 +29,7 @@ Features
 --------
 
 * Database and server agnostic
-  * You need to implement a backend that respond to activiy side-effects
+  * You need to implement a backend that respond to activity side-effects
     * This also mean you're responsible for serving the activities/collections and receiving them
 * ActivityStreams helper classes
   * with Outbox/Inbox abstractions
