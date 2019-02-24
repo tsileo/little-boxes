@@ -26,8 +26,9 @@ def hashtagify(content: str) -> Tuple[str, List[Dict[str, str]]]:
     base_url = get_backend().base_url()
     tags = []
     hashtags = re.findall(HASHTAG_REGEX, content)
+    hashtags = list(set(hashtags))  # unique tags
     hashtags.sort()
-    hashtags.reverse()  # replace longest tags first
+    hashtags.reverse()  # replace longest tag first
     for hashtag in hashtags:
         tag = hashtag[1:]
         link = f'<a href="{base_url}/tags/{tag}" class="mention hashtag" rel="tag">#<span>{tag}</span></a>'
