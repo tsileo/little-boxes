@@ -910,13 +910,13 @@ class Video(Note):
     OBJECT_REQURIED = False
 
 
-class Document(BaseActivity):
+class Document(Note):
     ACTIVITY_TYPE = ActivityType.DOCUMENT
     ACTOR_REQUIRED = True
     OBJECT_REQUIRED = False
 
 
-class Audio(Document):
+class Audio(Note):
     ACTIVITY_TYPE = ActivityType.AUDIO
     ACTOR_REQUIRED = True
     OBJECT_REQUIRED = False
