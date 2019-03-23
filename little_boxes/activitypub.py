@@ -126,6 +126,7 @@ CREATE_TYPES = [
     ActivityType.VIDEO,
     ActivityType.AUDIO,
     ActivityType.QUESTION,
+    ActivityType.DOCUMENT
 ]
 
 COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
