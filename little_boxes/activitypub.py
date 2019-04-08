@@ -564,7 +564,11 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                         # TODO(tsileo): retry separately?
                         logger.info(f"failed {recipient} to fetch recipient")
                         continue
-                    except (ActivityGoneError, ActivityNotFoundError, NotAnActivityError):
+                    except (
+                        ActivityGoneError,
+                        ActivityNotFoundError,
+                        NotAnActivityError,
+                    ):
                         logger.info(f"{item} is gone")
                         continue
 
