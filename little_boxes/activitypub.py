@@ -15,6 +15,7 @@ from .errors import ActivityGoneError
 from .errors import ActivityNotFoundError
 from .errors import ActivityUnavailableError
 from .errors import BadActivityError
+from .errors import NotAnActivityError
 from .errors import Error
 from .errors import UnexpectedActivityTypeError
 from .key import Key
@@ -563,7 +564,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                         # TODO(tsileo): retry separately?
                         logger.info(f"failed {recipient} to fetch recipient")
                         continue
-                    except (ActivityGoneError, ActivityNotFoundError):
+                    except (ActivityGoneError, ActivityNotFoundError, NotAnActivityError):
                         logger.info(f"{item} is gone")
                         continue
 
