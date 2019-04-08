@@ -531,7 +531,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
             try:
                 actor = fetch_remote_activity(recipient)
-            except ActivityGoneError:
+            except (ActivityGoneError, ActivityNotFoundError, NotAnActivityError):
                 logger.info(f"{recipient} is gone")
                 continue
             except ActivityUnavailableError:
