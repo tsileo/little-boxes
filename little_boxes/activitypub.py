@@ -106,6 +106,9 @@ class ActivityType(Enum):
     # Others
     MENTION = "Mention"
 
+    # Mastodon specific?
+    QUESTION = "Question"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -115,7 +118,7 @@ ACTOR_TYPES = [
     ActivityType.SERVICE,
 ]
 
-CREATE_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE, ActivityType.VIDEO]
+CREATE_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE, ActivityType.VIDEO, ActivityType.QUESTION]
 
 COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
 
@@ -875,6 +878,15 @@ class Note(BaseActivity):
                     logger.exception(f"invalid tag {tag!r}")
 
         return False
+
+
+class Question(Note):
+    ACTIVITY_TYPE = ActivityType.QUESTION
+    ACTOR_REQUIRED = True
+    OBJECT_REQURIED = False
+
+    def one_of(self) -> List[Dict[str, Any]]:
+        return self._data.get("oneOf", [])
 
 
 class Article(Note):
