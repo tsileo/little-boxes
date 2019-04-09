@@ -118,7 +118,12 @@ ACTOR_TYPES = [
     ActivityType.SERVICE,
 ]
 
-CREATE_TYPES = [ActivityType.NOTE, ActivityType.ARTICLE, ActivityType.VIDEO, ActivityType.QUESTION]
+CREATE_TYPES = [
+    ActivityType.NOTE,
+    ActivityType.ARTICLE,
+    ActivityType.VIDEO,
+    ActivityType.QUESTION,
+]
 
 COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
 
