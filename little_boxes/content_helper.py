@@ -37,7 +37,7 @@ def hashtagify(content: str) -> Tuple[str, List[Dict[str, str]]]:
     return content, tags
 
 
-def mentionify(content: str) -> Tuple[str, List[Dict[str, str]]]:
+def mentionify(content: str, hide_domain: bool = False) -> Tuple[str, List[Dict[str, str]]]:
     tags = []
     for mention in re.findall(MENTION_REGEX, content):
         _, username, domain = mention.split("@")
@@ -47,7 +47,12 @@ def mentionify(content: str) -> Tuple[str, List[Dict[str, str]]]:
             continue
         p = get_backend().fetch_iri(actor_url)
         tags.append(dict(type="Mention", href=p["id"], name=mention))
-        link = f'<span class="h-card"><a href="{p["url"]}" class="u-url mention">@<span>{username}</span></a></span>'
+
+        d = f"@<span>{domain}</span>"
+        if hide_domain:
+            d = ""
+
+        link = f'<span class="h-card"><a href="{p["url"]}" class="u-url mention">@<span>{username}</span>{d}</a></span>'
         content = content.replace(mention, link)
     return content, tags
 
