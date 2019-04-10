@@ -37,7 +37,9 @@ def hashtagify(content: str) -> Tuple[str, List[Dict[str, str]]]:
     return content, tags
 
 
-def mentionify(content: str, hide_domain: bool = False) -> Tuple[str, List[Dict[str, str]]]:
+def mentionify(
+    content: str, hide_domain: bool = False
+) -> Tuple[str, List[Dict[str, str]]]:
     tags = []
     for mention in re.findall(MENTION_REGEX, content):
         _, username, domain = mention.split("@")
