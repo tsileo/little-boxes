@@ -1,0 +1,12 @@
+pipeline:
+  build:
+    image: python:3
+    commands:
+      - pip install -r requirements.txt
+      - pip install -r dev-requirements.txt
+      - mypy --version
+      - mypy --ignore-missing-imports little_boxes
+      - flake8 little_boxes
+      - black --check .
+      - python -m pytest -vv --cov=little_boxes
+      - codecov
