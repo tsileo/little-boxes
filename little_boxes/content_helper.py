@@ -50,7 +50,7 @@ def mentionify(
         p = get_backend().fetch_iri(actor_url)
         tags.append(dict(type="Mention", href=p["id"], name=mention))
 
-        d = f"@<span>{domain}</span>"
+        d = f"@{domain}"
         if hide_domain:
             d = ""
 
