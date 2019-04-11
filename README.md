@@ -1,6 +1,5 @@
 # Little Boxes
 
-<a href="https://travis-ci.org/tsileo/little-boxes"><img src="https://travis-ci.org/tsileo/little-boxes.svg?branch=master" alt="Build Status"></a>
 <a href="https://d.a4.io/tsileo/little-boxes"><img src="https://d.a4.io/api/badges/tsileo/little-boxes/status.svg" alt="Build Status"></a>
 <a href="https://codecov.io/gh/tsileo/little-boxes">
   <img src="https://codecov.io/gh/tsileo/little-boxes/branch/master/graph/badge.svg" />
