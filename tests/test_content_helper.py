@@ -42,7 +42,7 @@ def test_little_content_helper_mention(_):
     content, tags = content_helper.parse_markdown("hello @dev@microblog.pub")
     assert content == (
         '<p>hello <span class="h-card"><a href="https://microblog.pub" class="u-url mention">@<span>dev</span>'
-        "@<span>microblog.pub</span></a></span></p>"
+        "@microblog.pub</a></span></p>"
     )
     assert tags == [
         {
