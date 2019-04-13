@@ -762,6 +762,17 @@ class Update(BaseActivity):
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
+    def _recipients(self) -> List[str]:
+        # TODO(tsileo): audience support?
+        recipients = []
+        for field in ["to", "cc", "bto", "bcc"]:
+            if field in self._data:
+                recipients.extend(_to_list(self._data[field]))
+
+        recipients.extend(self.get_object()._recipients())
+
+        return recipients
+
 
 class Create(BaseActivity):
     ACTIVITY_TYPE = ActivityType.CREATE
