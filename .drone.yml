@@ -1,12 +1,25 @@
-pipeline:
-  build:
+---
+kind: pipeline
+name: default
+steps:
+  - name : lint
+    image: python:3
+    commands:
+      - pip install -r requirements.txt
+      - pip install black flake8 mypy
+      - black --check .
+      - flake8 little_boxes
+      - mypy --ignore-missing-imports little_boxes
+
+  - name: test
     image: python:3
     commands:
       - pip install -r requirements.txt
       - pip install -r dev-requirements.txt
-      - mypy --version
-      - mypy --ignore-missing-imports little_boxes
-      - flake8 little_boxes
-      - black --check .
       - python -m pytest -vv --cov=little_boxes
       - codecov
+---
+kind: signature
+hmac: 1a911726b099fc76fc3ea1181f5c7b0c0e4d8d4b1b314204def5da7f21fb299b
+
+...
