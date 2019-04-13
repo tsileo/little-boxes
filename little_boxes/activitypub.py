@@ -85,6 +85,8 @@ class ActivityType(Enum):
     NOTE = "Note"
     ARTICLE = "Article"
     VIDEO = "Video"
+    AUDIO = "Audio"
+    DOCUMENT = "Document"
 
     ACCEPT = "Accept"
     REJECT = "Reject"
@@ -122,7 +124,9 @@ CREATE_TYPES = [
     ActivityType.NOTE,
     ActivityType.ARTICLE,
     ActivityType.VIDEO,
+    ActivityType.AUDIO,
     ActivityType.QUESTION,
+    ActivityType.DOCUMENT
 ]
 
 COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
@@ -904,6 +908,18 @@ class Video(Note):
     ACTIVITY_TYPE = ActivityType.VIDEO
     ACTOR_REQUIRED = True
     OBJECT_REQURIED = False
+
+
+class Document(Note):
+    ACTIVITY_TYPE = ActivityType.DOCUMENT
+    ACTOR_REQUIRED = True
+    OBJECT_REQUIRED = False
+
+
+class Audio(Note):
+    ACTIVITY_TYPE = ActivityType.AUDIO
+    ACTOR_REQUIRED = True
+    OBJECT_REQUIRED = False
 
 
 def fetch_remote_activity(
