@@ -2,6 +2,7 @@
 import logging
 import weakref
 from datetime import datetime
+from datetime import timezone
 from enum import Enum
 from typing import Any
 from typing import Dict
@@ -69,7 +70,10 @@ def use_backend(backend_instance):
 
 
 def format_datetime(dt: datetime) -> str:
-    return dt.replace(microsecond=0).isoformat() + "Z"
+    if dt.tzinfo is None:
+        raise ValueError("datetime must be tz aware")
+
+    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat() + "Z"
 
 
 class ActivityType(Enum):
@@ -816,7 +820,7 @@ class Create(BaseActivity):
             if self.published:
                 self._data["object"]["published"] = self.published
             else:
-                now = format_datetime(datetime.utcnow())
+                now = format_datetime(datetime.now().astimezone())
                 self._data["published"] = now
                 self._data["object"]["published"] = now
 
@@ -889,7 +893,7 @@ class Note(BaseActivity):
             object=self.id,
             to=[AS_PUBLIC],
             cc=[as_actor.followers, self.attributedTo],
-            published=format_datetime(datetime.utcnow()),
+            published=format_datetime(datetime.now().astimezone()),
         )
 
     def has_mention(self, actor_id: str) -> bool:
