@@ -784,8 +784,9 @@ class Create(BaseActivity):
         """Returns True if the activity is addressed to the special "public" collection."""
         for field in ["to", "cc", "bto", "bcc"]:
             if field in self._data:
-                if AS_PUBLIC in self._data[field]:
+                if AS_PUBLIC in _to_list(self._data[field]):
                     return True
+
         return False
 
     def _set_id(self, uri: str, obj_id: str) -> None:
