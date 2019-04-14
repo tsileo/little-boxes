@@ -68,6 +68,10 @@ def use_backend(backend_instance):
     BACKEND = backend_instance
 
 
+def format_datetime(dt: datetime) -> str:
+    return dt.replace(microsecond=0).isoformat() + "Z"
+
+
 class ActivityType(Enum):
     """Supported activity `type`."""
 
@@ -812,7 +816,7 @@ class Create(BaseActivity):
             if self.published:
                 self._data["object"]["published"] = self.published
             else:
-                now = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+                now = format_datetime(datetime.utcnow())
                 self._data["published"] = now
                 self._data["object"]["published"] = now
 
@@ -885,7 +889,7 @@ class Note(BaseActivity):
             object=self.id,
             to=[AS_PUBLIC],
             cc=[as_actor.followers, self.attributedTo],
-            published=datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+            published=format_datetime(datetime.utcnow()),
         )
 
     def has_mention(self, actor_id: str) -> bool:
