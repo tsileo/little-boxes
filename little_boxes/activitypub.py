@@ -73,7 +73,12 @@ def format_datetime(dt: datetime) -> str:
     if dt.tzinfo is None:
         raise ValueError("datetime must be tz aware")
 
-    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        dt.astimezone(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 class ActivityType(Enum):
