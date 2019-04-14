@@ -131,6 +131,7 @@ ACTOR_TYPES = [
     ActivityType.GROUP,
     ActivityType.ORGANIZATION,
     ActivityType.SERVICE,
+    ActivityType.QUESTION,  # Mastodon notoft the end of a question with an update from that question
 ]
 
 CREATE_TYPES = [
