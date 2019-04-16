@@ -914,6 +914,16 @@ class Note(BaseActivity):
 
         return False
 
+    def get_in_reply_to(self) -> Optional[str]:
+        if self.inReplyTo is None:
+            return None
+        elif isinstance(self.inReplyTo, str):
+            return self.inReplyTo
+        elif isinstance(self.inReplyTo, dict):
+            return self.inReplyTo["id"]
+        else:
+            raise ValueError(f"unexpected inReplyTo: {self.inReplyTo}")
+
 
 class Question(Note):
     ACTIVITY_TYPE = ActivityType.QUESTION
