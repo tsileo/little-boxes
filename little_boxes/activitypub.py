@@ -196,6 +196,20 @@ def _get_actor_id(actor: ObjectOrIDType) -> str:
     return actor
 
 
+def _get_id(obj) -> Optional[str]:
+    if obj is None:
+        return None
+    elif isinstance(obj, str):
+        return obj
+    elif isinstance(obj, dict):
+        try:
+            return obj["id"]
+        except KeyError:
+            raise ValueError(f"object is missing ID: {obj!r}")
+    else:
+        raise ValueError(f"unexpected object: {obj!r}")
+
+
 def _has_type(
     obj_type: Union[str, List[str]],
     _types: Union[ActivityType, str, List[Union[ActivityType, str]]],
@@ -915,14 +929,7 @@ class Note(BaseActivity):
         return False
 
     def get_in_reply_to(self) -> Optional[str]:
-        if self.inReplyTo is None:
-            return None
-        elif isinstance(self.inReplyTo, str):
-            return self.inReplyTo
-        elif isinstance(self.inReplyTo, dict):
-            return self.inReplyTo["id"]
-        else:
-            raise ValueError(f"unexpected inReplyTo: {self.inReplyTo}")
+        return _get_id(self.inReplyTo)
 
 
 class Question(Note):
