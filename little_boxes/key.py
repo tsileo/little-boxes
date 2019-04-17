@@ -34,7 +34,7 @@ class Key(object):
         self.privkey = k
 
     def key_id(self) -> str:
-        return f"{self.owner}#main-key"
+        return self._id or f"{self.owner}#main-key"
 
     def to_dict(self) -> Dict[str, Any]:
         return {

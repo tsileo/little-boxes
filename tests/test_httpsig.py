@@ -16,9 +16,9 @@ def test_httpsig():
     back = InMemBackend()
     ap.use_backend(back)
 
-    k = Key("https://lol.com")
+    k = Key("https://lol.com", "https://lol.com#lol")
     k.new()
-    back.FETCH_MOCK["https://lol.com#main-key"] = {
+    back.FETCH_MOCK["https://lol.com#lol"] = {
         "publicKey": k.to_dict(),
         "id": "https://lol.com",
     }
