@@ -68,7 +68,9 @@ def _get_public_key(key_id: str) -> Key:
 
     # Ensure the right key was fetch
     if key_id != actor["publicKey"]["id"]:
-        raise ValueError(f"failed to fetch requested key {key_id}: got {actor['publicKey']['id']}")
+        raise ValueError(
+            f"failed to fetch requested key {key_id}: got {actor['publicKey']['id']}"
+        )
 
     return k
 
