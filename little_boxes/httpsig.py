@@ -83,8 +83,6 @@ def verify_request(method: str, path: str, headers: Any, body: str) -> bool:
     except (ActivityGoneError, ActivityNotFoundError):
         logger.debug("cannot get public key")
         return False
-    if k.key_id() != hsig["keyId"]:
-        return False
 
     return _verify_h(signed_string, base64.b64decode(hsig["signature"]), k.pubkey)
 
