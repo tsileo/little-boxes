@@ -65,6 +65,11 @@ def _get_public_key(key_id: str) -> Key:
     actor = get_backend().fetch_iri(key_id)
     k = Key(actor["id"], key_id)
     k.load_pub(actor["publicKey"]["publicKeyPem"])
+
+    # Ensure the right key was fetch
+    if key_id != actor["publicKey"]["id"]:
+        raise ValueError(f"failed to fetch requested key {key_id}: got {actor['publicKey']['id']}")
+
     return k
 
 
