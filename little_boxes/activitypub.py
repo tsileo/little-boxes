@@ -124,6 +124,9 @@ class ActivityType(Enum):
     # Mastodon specific?
     QUESTION = "Question"
 
+    # Used by Prismo
+    PAGE = "Page"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -141,6 +144,7 @@ CREATE_TYPES = [
     ActivityType.AUDIO,
     ActivityType.QUESTION,
     ActivityType.DOCUMENT,
+    ActivityType.PAGE,
 ]
 
 COLLECTION_TYPES = [ActivityType.COLLECTION, ActivityType.ORDERED_COLLECTION]
@@ -943,6 +947,12 @@ class Question(Note):
 
 class Article(Note):
     ACTIVITY_TYPE = ActivityType.ARTICLE
+    ACTOR_REQUIRED = True
+    OBJECT_REQURIED = False
+
+
+class Page(Note):
+    ACTIVITY_TYPE = ActivityType.PAGE
     ACTOR_REQUIRED = True
     OBJECT_REQURIED = False
 
