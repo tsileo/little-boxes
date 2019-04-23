@@ -41,6 +41,7 @@ class Key(object):
             "id": self.key_id(),
             "owner": self.owner,
             "publicKeyPem": self.pubkey_pem,
+            "type": "Key",
         }
 
     @classmethod
