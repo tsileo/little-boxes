@@ -127,6 +127,9 @@ class ActivityType(Enum):
     # Used by Prismo
     PAGE = "Page"
 
+    # Misskey uses standalone Key object
+    KEY = "Key"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,

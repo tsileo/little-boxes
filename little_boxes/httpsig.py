@@ -17,6 +17,7 @@ from Crypto.Signature import PKCS1_v1_5
 from requests.auth import AuthBase
 
 from .activitypub import get_backend
+from .activitypub import _has_type
 from .errors import ActivityNotFoundError
 from .errors import ActivityGoneError
 from .key import Key
@@ -63,11 +64,16 @@ def _body_digest(body: str) -> str:
 
 def _get_public_key(key_id: str) -> Key:
     actor = get_backend().fetch_iri(key_id)
-    k = Key(actor["id"], key_id)
-    k.load_pub(actor["publicKey"]["publicKeyPem"])
+    if _has_type(actor["type"], "Key"):
+        # The Key is not embedded in the Person
+        k = Key(actor["owner"], actor["id"])
+        k.load_pub(actor["publicKeyPem"])
+    else:
+        k = Key(actor["id"], actor["publicKey"]["id"])
+        k.load_pub(actor["publicKey"]["publicKeyPem"])
 
     # Ensure the right key was fetch
-    if key_id != actor["publicKey"]["id"]:
+    if key_id != k.key_id():
         raise ValueError(
             f"failed to fetch requested key {key_id}: got {actor['publicKey']['id']}"
         )
