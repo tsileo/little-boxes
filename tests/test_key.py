@@ -10,6 +10,7 @@ def test_key_new_load():
         "id": f"{owner}#main-key",
         "owner": owner,
         "publicKeyPem": k.pubkey_pem,
+        "type": "Key",
     }
 
     k2 = Key(owner)
