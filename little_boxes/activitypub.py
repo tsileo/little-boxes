@@ -31,25 +31,12 @@ ActorType = Union["Person", "Application", "Group", "Organization", "Service"]
 ObjectOrIDType = Union[str, ObjectType]
 
 CTX_AS = "https://www.w3.org/ns/activitystreams"
-CTX_SECURITY = "https://w3id.org/security/v1"
 AS_PUBLIC = "https://www.w3.org/ns/activitystreams#Public"
 
 DEFAULT_CTX = COLLECTION_CTX = [
     "https://www.w3.org/ns/activitystreams",
-    "https://w3id.org/security/v1",
-    {
-        # AS ext
-        "Hashtag": "as:Hashtag",
-        "sensitive": "as:sensitive",
-        "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
-        # toot
-        "toot": "http://joinmastodon.org/ns#",
-        "featured": "toot:featured",
-        # schema
-        "schema": "http://schema.org#",
-        "PropertyValue": "schema:PropertyValue",
-        "value": "schema:value",
-    },
+    "https://pleroma.site/schemas/litepub-0.1.jsonld",
+    {"@language": "und"},
 ]
 
 # Will be used to keep track of all the defined activities
@@ -333,13 +320,12 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         # @context check
         if not isinstance(self._data["@context"], list):
             self._data["@context"] = [self._data["@context"]]
-        if CTX_SECURITY not in self._data["@context"]:
-            self._data["@context"].append(CTX_SECURITY)
         if isinstance(self._data["@context"][-1], dict):
             self._data["@context"][-1]["Hashtag"] = "as:Hashtag"
             self._data["@context"][-1]["sensitive"] = "as:sensitive"
             self._data["@context"][-1]["toot"] = "http://joinmastodon.org/ns#"
             self._data["@context"][-1]["featured"] = "toot:featured"
+            self._data["@context"][-1]["@language"] = "und"
         else:
             self._data["@context"].append(
                 {
@@ -347,6 +333,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                     "sensitive": "as:sensitive",
                     "toot": "http://joinmastodon.org/ns#",
                     "featured": "toot:featured",
+                    "@language": "und",
                 }
             )
 
