@@ -39,6 +39,7 @@ DEFAULT_CTX = COLLECTION_CTX = [
     {"@language": "und"},
 ]
 
+
 # Will be used to keep track of all the defined activities
 _ACTIVITY_CLS: Dict["ActivityType", Type["BaseActivity"]] = {}
 
@@ -313,29 +314,10 @@ class BaseActivity(object, metaclass=_ActivityMeta):
                 )
 
         if "@context" not in kwargs:
+            # Set a default @context if needed
             self._data["@context"] = CTX_AS
         else:
             self._data["@context"] = kwargs.pop("@context")
-
-        # @context check
-        if not isinstance(self._data["@context"], list):
-            self._data["@context"] = [self._data["@context"]]
-        if isinstance(self._data["@context"][-1], dict):
-            self._data["@context"][-1]["Hashtag"] = "as:Hashtag"
-            self._data["@context"][-1]["sensitive"] = "as:sensitive"
-            self._data["@context"][-1]["toot"] = "http://joinmastodon.org/ns#"
-            self._data["@context"][-1]["featured"] = "toot:featured"
-            self._data["@context"][-1]["@language"] = "und"
-        else:
-            self._data["@context"].append(
-                {
-                    "Hashtag": "as:Hashtag",
-                    "sensitive": "as:sensitive",
-                    "toot": "http://joinmastodon.org/ns#",
-                    "featured": "toot:featured",
-                    "@language": "und",
-                }
-            )
 
         # Remove keys with `None` value
         valid_kwargs = {}
