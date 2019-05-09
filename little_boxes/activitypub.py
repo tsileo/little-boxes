@@ -1,6 +1,5 @@
 """Core ActivityPub classes."""
 import logging
-import weakref
 from datetime import datetime
 from datetime import timezone
 from enum import Enum
@@ -266,9 +265,6 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         logger.debug(f"initializing a {self.ACTIVITY_TYPE.value} activity: {kwargs!r}")
 
-        # A place to set ephemeral data
-        self.__ctx: Any = {}
-
         self.__obj: Optional["BaseActivity"] = None
         self.__actor: Optional[List[ActorType]] = None
 
@@ -367,14 +363,6 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             return last_link
         else:
             raise BadActivityError(f"invalid type for {self.url}")
-
-    def ctx(self) -> Any:
-        if self.__ctx:
-            return self.__ctx()
-
-    def set_ctx(self, ctx: Any) -> None:
-        # FIXME(tsileo): does not use the ctx to set the id to the "parent" when building  delete
-        self.__ctx = weakref.ref(ctx)
 
     def __repr__(self) -> str:
         """Pretty repr."""
@@ -801,12 +789,6 @@ class Create(BaseActivity):
         self._data["object"]["id"] = uri + "/activity"
         if "url" not in self._data["object"]:
             self._data["object"]["url"] = BACKEND.note_url(obj_id)
-        if isinstance(self.ctx(), Note):
-            try:
-                self.ctx().id = self._data["object"]["id"]
-            except NotImplementedError:
-                pass
-        self.reset_object_cache()
 
     def _init(self) -> None:
         obj = self.get_object()
@@ -876,7 +858,6 @@ class Note(BaseActivity):
                 create_payload[field] = self._data[field]
 
         create = Create(**create_payload)
-        create.set_ctx(self)
 
         return create
 
