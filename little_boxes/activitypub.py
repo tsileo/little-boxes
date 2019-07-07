@@ -501,7 +501,7 @@ class BaseActivity(object, metaclass=_ActivityMeta):
             else:
                 raise BadActivityError(f"failed to fetch actor: {self._data!r}")
 
-        self.__actor: List[ActorType] = []
+        self.__actor = []
         for item in _to_list(actor):
             if not isinstance(item, (str, dict)):
                 raise BadActivityError(f"invalid actor: {self._data!r}")
