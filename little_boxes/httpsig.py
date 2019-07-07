@@ -74,7 +74,8 @@ def _get_public_key(key_id: str) -> Key:
 
     # Ensure the right key was fetch
     if key_id != k.key_id():
-        raise ValueError(
+        # Just issue a warning as some server don't have this right
+        logger.warning(
             f"failed to fetch requested key {key_id}: got {actor['publicKey']['id']}"
         )
 
