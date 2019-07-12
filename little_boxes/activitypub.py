@@ -68,6 +68,15 @@ def format_datetime(dt: datetime) -> str:
     )
 
 
+class Visibility(Enum):
+    """Post visibility supported by most Fediverse software."""
+
+    PUBLIC = "Public"
+    UNLISTED = "Unlisted"
+    FOLLOWERS_ONLY = "Followers only"
+    DIRECT = "Direct"
+
+
 class ActivityType(Enum):
     """Supported activity `type`."""
 
@@ -932,3 +941,20 @@ def fetch_remote_activity(
     iri: str, expected: Optional[ActivityType] = None
 ) -> BaseActivity:
     return parse_activity(get_backend().fetch_iri(iri), expected=expected)
+
+
+def get_visibility(activity: BaseActivity) -> Visibility:
+    to = activity._data.get("to", [])
+    cc = activity._data.get("cc", [])
+
+    if AS_PUBLIC in to:
+        return Visibility.PUBLIC
+
+    if AS_PUBLIC in cc:
+        return Visibility.UNLISTED
+
+    actor = activity.get_actor()
+    if actor.followers in to or actor.followers in cc:
+        return Visibility.FOLLOWERS_ONLY
+
+    return Visibility.DIRECT
