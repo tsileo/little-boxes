@@ -73,7 +73,7 @@ class Visibility(Enum):
 
     PUBLIC = "Public"
     UNLISTED = "Unlisted"
-    FOLLOWERS_ONLY = "Followers only"
+    FOLLOWERS_ONLY = "Followers-only"
     DIRECT = "Direct"
 
 
