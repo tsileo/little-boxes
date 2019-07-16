@@ -691,7 +691,11 @@ class Undo(BaseActivity):
         if obj.ACTIVITY_TYPE == ActivityType.FOLLOW:
             return [obj.get_object().id]
         else:
-            return [obj.get_object().get_actor().id]
+            recipients = [obj.get_object().get_actor().id]
+            for field in ["to", "cc"]:
+                if field in self._data:
+                    recipients.extend(_to_list(self._data[field]))
+            return list(set(recipients))
 
 
 class Like(BaseActivity):
@@ -701,7 +705,11 @@ class Like(BaseActivity):
     ACTOR_REQUIRED = True
 
     def _recipients(self) -> List[str]:
-        return [self.get_object().get_actor().id]
+        recipients = [self.get_object().get_actor().id]
+        for field in ["to", "cc"]:
+            if field in self._data:
+                recipients.extend(_to_list(self._data[field]))
+        return list(set(recipients))
 
     def build_undo(self) -> BaseActivity:
         return Undo(
@@ -753,8 +761,12 @@ class Delete(BaseActivity):
         return obj
 
     def _recipients(self) -> List[str]:
-        obj = self._get_actual_object()
-        return obj._recipients()
+        recipients = []
+        for field in ["to", "cc"]:
+            if field in self._data:
+                recipients.extend(_to_list(self._data[field]))
+
+        return list(set(recipients))
 
 
 class Update(BaseActivity):
