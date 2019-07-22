@@ -32,10 +32,7 @@ class Backend(abc.ABC):
         check_url(url, debug=self.debug_mode())
 
     def user_agent(self) -> str:
-        return (
-            f"{requests.utils.default_user_agent()} (Little Boxes/{__version__};"
-            " +http://github.com/tsileo/little-boxes)"
-        )
+        return f"Little Boxes/{__version__}; +http://github.com/tsileo/little-boxes"
 
     def random_object_id(self) -> str:
         """Generates a random object ID."""
