@@ -600,6 +600,12 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         return out
 
 
+class Mention(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.MENTION
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+
 class Person(BaseActivity):
     ACTIVITY_TYPE = ActivityType.PERSON
     OBJECT_REQUIRED = False
@@ -905,6 +911,16 @@ class Note(BaseActivity):
                     logger.exception(f"invalid tag {tag!r}")
 
         return False
+
+    def get_mentions(self) -> List["Mention"]:
+        if self.tag is None:
+            return []
+
+        mentions = []
+        for tag in self.tag:
+            mentions.append(Mention(**tag))
+
+        return mentions
 
     def get_in_reply_to(self) -> Optional[str]:
         return _get_id(self.inReplyTo)
