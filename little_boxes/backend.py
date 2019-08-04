@@ -24,7 +24,6 @@ if typing.TYPE_CHECKING:
 
 
 class Backend(abc.ABC):
-
     @abc.abstractmethod
     def base_url(self) -> str:
         pass  # pragma: no cover
