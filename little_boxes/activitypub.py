@@ -891,7 +891,8 @@ class Note(BaseActivity):
 
         mentions = []
         for tag in self.tag:
-            mentions.append(Mention(**tag))
+            if _has_type(tag["type"], ActivityType.MENTION):
+                mentions.append(Mention(**tag))
 
         return mentions
 
