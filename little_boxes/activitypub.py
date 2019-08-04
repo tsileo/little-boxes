@@ -748,24 +748,6 @@ class Delete(BaseActivity):
     ALLOWED_OBJECT_TYPES = CREATE_TYPES + ACTOR_TYPES + [ActivityType.TOMBSTONE]
     OBJECT_REQUIRED = True
 
-    def _get_actual_object(self) -> BaseActivity:
-        if BACKEND is None:
-            raise UninitializedBackendError
-
-        # XXX(tsileo): overrides get_object instead?
-        obj = self.get_object()
-        if (
-            obj.id.startswith(BACKEND.base_url())
-            and obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE
-        ):
-            obj = parse_activity(BACKEND.fetch_iri(obj.id))
-        if obj.ACTIVITY_TYPE == ActivityType.TOMBSTONE:
-            # If we already received it, we may be able to get a copy
-            better_obj = BACKEND.fetch_iri(obj.id)
-            if better_obj:
-                return parse_activity(better_obj)
-        return obj
-
     def _recipients(self) -> List[str]:
         recipients = []
         for field in ["to", "cc"]:
@@ -807,15 +789,6 @@ class Create(BaseActivity):
                     return True
 
         return False
-
-    def _set_id(self, uri: str, obj_id: str) -> None:
-        if BACKEND is None:
-            raise UninitializedBackendError
-
-        # FIXME(tsileo): add a BACKEND.note_activity_url, and pass the actor to both
-        self._data["object"]["id"] = uri + "/activity"
-        if "url" not in self._data["object"]:
-            self._data["object"]["url"] = BACKEND.note_url(obj_id)
 
     def _init(self) -> None:
         obj = self.get_object()

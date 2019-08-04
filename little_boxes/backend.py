@@ -24,6 +24,11 @@ if typing.TYPE_CHECKING:
 
 
 class Backend(abc.ABC):
+
+    @abc.abstractmethod
+    def base_url(self) -> str:
+        pass  # pragma: no cover
+
     def debug_mode(self) -> bool:
         """Should be overidded to return `True` in order to enable the debug mode."""
         return False
@@ -65,10 +70,6 @@ class Backend(abc.ABC):
         self, as_actor: "ap.Person", activity: "ap.BaseActivity"
     ) -> bool:
         return activity.get_actor().id == as_actor.id
-
-    @abc.abstractmethod
-    def base_url(self) -> str:
-        pass  # pragma: no cover
 
     def fetch_iri(self, iri: str, **kwargs) -> "ap.ObjectType":  # pragma: no cover
         if not iri.startswith("http"):
@@ -115,11 +116,3 @@ class Backend(abc.ABC):
             raise NotAnActivityError(f"{iri} is not JSON")
 
         return out
-
-    @abc.abstractmethod
-    def activity_url(self, obj_id: str) -> str:
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def note_url(self, obj_id: str) -> str:
-        pass  # pragma: no cover
