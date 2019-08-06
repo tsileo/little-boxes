@@ -101,10 +101,13 @@ class Backend(abc.ABC):
             raise ActivityNotFoundError(f"{iri} is not found")
         elif resp.status_code == 410:
             raise ActivityGoneError(f"{iri} is gone")
-        elif resp.status_code in [500, 502, 503]:
+        elif resp.status_code in [403, 500, 502, 503]:
             raise ActivityUnavailableError(
                 f"unable to fetch {iri}, server error ({resp.status_code})"
             )
+        elif resp.status_code == 406:
+            # The resource does not have an AP representation
+            raise NotAnActivityError(f"request failed with 406 Not Acceptable")
 
         resp.raise_for_status()
 
