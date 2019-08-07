@@ -80,9 +80,13 @@ class UnexpectedActivityTypeError(BadActivityError):
 
 
 class ActivityUnavailableError(ServerError):
-    """Raises when fetching a remote activity times out."""
+    """Raised on failure to fetch a remote object."""
 
     status_code = 503
+
+
+class RemoteServerUnavailableError(ActivityUnavailableError):
+    """Raised on failture to fetch a remote object because the server failed to answer/is unavailable."""
 
 
 class NotAnActivityError(ServerError):

@@ -16,6 +16,7 @@ from .errors import ActivityGoneError
 from .errors import ActivityNotFoundError
 from .errors import ActivityUnavailableError
 from .errors import NotAnActivityError
+from .errors import RemoteServerUnavailableError
 from .urlutils import URLLookupFailedError
 from .urlutils import check_url as check_url
 
@@ -44,13 +45,18 @@ class Backend(abc.ABC):
 
     def fetch_json(self, url: str, **kwargs):
         self.check_url(url)
-        resp = requests.get(
-            url,
-            headers={"User-Agent": self.user_agent(), "Accept": "application/json"},
-            **kwargs,
-            timeout=15,
-            allow_redirects=True,
-        )
+        try:
+            resp = requests.get(
+                url,
+                headers={"User-Agent": self.user_agent(), "Accept": "application/json"},
+                **kwargs,
+                timeout=10,
+                allow_redirects=True,
+            )
+        except requests.RequestException as err:
+            raise RemoteServerUnavailableError(
+                f"failed to fetch {url} as JSON: {err!r}"
+            )
 
         resp.raise_for_status()
 
@@ -87,16 +93,13 @@ class Backend(abc.ABC):
                     "User-Agent": self.user_agent(),
                     "Accept": "application/activity+json",
                 },
-                timeout=15,
-                allow_redirects=False,
+                timeout=10,
+                allow_redirects=True,
                 **kwargs,
             )
-        except (
-            requests.exceptions.ConnectTimeout,
-            requests.exceptions.ReadTimeout,
-            requests.exceptions.ConnectionError,
-        ):
-            raise ActivityUnavailableError(f"unable to fetch {iri}, connection error")
+        except requests.RequestException as err:
+            raise RemoteServerUnavailableError(f"unable to fetch {iri}: {err!r}")
+
         if resp.status_code == 404:
             raise ActivityNotFoundError(f"{iri} is not found")
         elif resp.status_code == 410:
@@ -109,7 +112,12 @@ class Backend(abc.ABC):
             # The resource does not have an AP representation
             raise NotAnActivityError(f"request failed with 406 Not Acceptable")
 
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError:
+            raise ActivityUnavailableError(
+                f"unable to fetch {iri}, server error ({resp.status_code})"
+            )
 
         try:
             out = resp.json()

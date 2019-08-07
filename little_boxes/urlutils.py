@@ -4,8 +4,8 @@ import socket
 from typing import Dict
 from urllib.parse import urlparse
 
-from .errors import Error
 from .errors import ServerError
+from .errors import RemoteServerUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class InvalidURLError(ServerError):
     pass
 
 
-class URLLookupFailedError(Error):
+class URLLookupFailedError(RemoteServerUnavailableError):
     pass
 
 
