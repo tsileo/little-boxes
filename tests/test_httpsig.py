@@ -34,7 +34,7 @@ def test_httpsig():
         resp.request.path_url,
         resp.request.headers,
         resp.request.body,
-    )
+    )[0]
 
 
 @httpretty.activate
@@ -56,4 +56,4 @@ def test_httpsig_key():
         resp.request.path_url,
         resp.request.headers,
         resp.request.body,
-    )
+    )[0]
