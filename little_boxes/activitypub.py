@@ -940,9 +940,9 @@ class Audio(Note):
 
 
 def fetch_remote_activity(
-    iri: str, expected: Optional[ActivityType] = None
+    iri: str, expected: Optional[ActivityType] = None, **kwargs: Any
 ) -> BaseActivity:
-    return parse_activity(get_backend().fetch_iri(iri), expected=expected)
+    return parse_activity(get_backend().fetch_iri(iri, **kwargs), expected=expected)
 
 
 def get_visibility(activity: BaseActivity) -> Visibility:
