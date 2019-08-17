@@ -32,11 +32,7 @@ ObjectOrIDType = Union[str, ObjectType]
 CTX_AS = "https://www.w3.org/ns/activitystreams"
 AS_PUBLIC = "https://www.w3.org/ns/activitystreams#Public"
 
-DEFAULT_CTX = COLLECTION_CTX = [
-    "https://www.w3.org/ns/activitystreams",
-    "https://pleroma.site/schemas/litepub-0.1.jsonld",
-    {"@language": "und"},
-]
+DEFAULT_CTX = COLLECTION_CTX = "https://www.w3.org/ns/activitystreams"
 
 
 # Will be used to keep track of all the defined activities
