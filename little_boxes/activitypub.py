@@ -887,6 +887,10 @@ class Note(BaseActivity):
 
         mentions = []
         for tag in self.tag:
+            # Some AP implemention return "type"less tag for links
+            if "type" not in tag:
+                continue
+
             if _has_type(tag["type"], ActivityType.MENTION):
                 mentions.append(Mention(**tag))
 
