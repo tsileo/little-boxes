@@ -122,6 +122,8 @@ class ActivityType(Enum):
     # Misskey uses standalone Key object
     KEY = "Key"
 
+    EMOJI = "Emoji"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -595,6 +597,21 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         return out
 
+    def get_emojis(self) -> List["Emoji"]:
+        if self.tag is None:
+            return []
+
+        emojis = []
+        for tag in self.tag:
+            # Some AP implemention return "type"less tag for links
+            if "type" not in tag:
+                continue
+
+            if _has_type(tag["type"], ActivityType.EMOJI):
+                emojis.append(Emoji(**tag))
+
+        return emojis
+
 
 class Mention(BaseActivity):
     ACTIVITY_TYPE = ActivityType.MENTION
@@ -652,6 +669,15 @@ class Image(BaseActivity):
 
     def __repr__(self):
         return "Image({!r})".format(self._data.get("url"))
+
+
+class Emoji(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.EMOJI
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+    def get_icon_url(self) -> str:
+        return self.icon["url"]
 
 
 class Follow(BaseActivity):
