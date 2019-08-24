@@ -25,6 +25,9 @@ if typing.TYPE_CHECKING:
 
 
 class Backend(abc.ABC):
+    def ap_context(self) -> Any:
+        return "https://www.w3.org/ns/activitystreams"
+
     @abc.abstractmethod
     def base_url(self) -> str:
         pass  # pragma: no cover

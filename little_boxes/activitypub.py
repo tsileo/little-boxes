@@ -32,9 +32,6 @@ ObjectOrIDType = Union[str, ObjectType]
 CTX_AS = "https://www.w3.org/ns/activitystreams"
 AS_PUBLIC = "https://www.w3.org/ns/activitystreams#Public"
 
-DEFAULT_CTX = COLLECTION_CTX = "https://www.w3.org/ns/activitystreams"
-
-
 # Will be used to keep track of all the defined activities
 _ACTIVITY_CLS: Dict["ActivityType", Type["BaseActivity"]] = {}
 
@@ -318,7 +315,9 @@ class BaseActivity(object, metaclass=_ActivityMeta):
 
         if "@context" not in kwargs:
             # Set a default @context if needed
-            self._data["@context"] = CTX_AS
+            if BACKEND is None:
+                raise UninitializedBackendError
+            self._data["@context"] = BACKEND.ap_context()
         else:
             self._data["@context"] = kwargs.pop("@context")
 
