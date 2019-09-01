@@ -109,6 +109,7 @@ class ActivityType(Enum):
 
     # Others
     MENTION = "Mention"
+    HASHTAG = "Hashtag"
 
     # Mastodon specific?
     QUESTION = "Question"
@@ -616,6 +617,15 @@ class Mention(BaseActivity):
     ACTOR_REQUIRED = False
 
 
+class Hashtag(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.HASHTAG
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+    def get_value(self) -> str:
+        return self.name[1:]
+
+
 class Person(BaseActivity):
     ACTIVITY_TYPE = ActivityType.PERSON
     OBJECT_REQUIRED = False
@@ -928,6 +938,21 @@ class Note(BaseActivity):
                 mentions.append(Mention(**tag))
 
         return mentions
+
+    def get_hashtags(self) -> List["Hashtag"]:
+        if self.tag is None:
+            return []
+
+        hashtags = []
+        for tag in self.tag:
+            # Some AP implemention return "type"less tag for links
+            if "type" not in tag:
+                continue
+
+            if _has_type(tag["type"], ActivityType.HASHTAG):
+                hashtags.append(Hashtag(**tag))
+
+        return hashtags
 
     def get_in_reply_to(self) -> Optional[str]:
         return _get_id(self.inReplyTo)
