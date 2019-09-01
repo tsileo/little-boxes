@@ -700,6 +700,16 @@ class Accept(BaseActivity):
         return [self.get_object().get_actor().id]
 
 
+class Reject(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.ACCEPT
+    ALLOWED_OBJECT_TYPES = [ActivityType.FOLLOW]
+    OBJECT_REQUIRED = True
+    ACTOR_REQUIRED = True
+
+    def _recipients(self) -> List[str]:
+        return [self.get_object().get_actor().id]
+
+
 class Undo(BaseActivity):
     ACTIVITY_TYPE = ActivityType.UNDO
     ALLOWED_OBJECT_TYPES = [
