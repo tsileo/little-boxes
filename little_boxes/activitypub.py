@@ -351,6 +351,8 @@ class BaseActivity(object, metaclass=_ActivityMeta):
         Returns the URL if it's a str, or the href of the first link.
 
         """
+        if self.url is None:
+            return self.id
         if isinstance(self.url, str):
             return self.url
         elif isinstance(self.url, dict):
