@@ -713,7 +713,7 @@ class Accept(BaseActivity):
 
 
 class Reject(BaseActivity):
-    ACTIVITY_TYPE = ActivityType.ACCEPT
+    ACTIVITY_TYPE = ActivityType.REJECT
     ALLOWED_OBJECT_TYPES = [ActivityType.FOLLOW]
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
