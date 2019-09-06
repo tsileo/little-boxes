@@ -122,6 +122,12 @@ class ActivityType(Enum):
 
     EMOJI = "Emoji"
 
+    ADD = "Add"
+    REMOVE = "Remove"
+    DISLIKE = "Dislike"
+    READ = "Read"
+    IGNORE = "Ignore"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -765,6 +771,10 @@ class Like(BaseActivity):
         )
 
 
+class Dislike(Like):
+    ACTIVITY_TYPE = ActivityType.DISLIKE
+
+
 class Announce(BaseActivity):
     ACTIVITY_TYPE = ActivityType.ANNOUNCE
     ALLOWED_OBJECT_TYPES = CREATE_TYPES
@@ -782,6 +792,29 @@ class Announce(BaseActivity):
 
     def build_undo(self) -> BaseActivity:
         return Undo(actor=self.get_actor().id, object=self.to_dict(embed=True))
+
+
+class Add(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.ADD
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES
+    OBJECT_REQUIRED = True
+    ACTOR_REQUIRED = True
+    # TODO(tsileo): target helper
+
+
+class Remove(Add):
+    ACTIVITY_TYPE = ActivityType.REMOVE
+
+
+class Read(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.READ
+    ALLOWED_OBJECT_TYPES = CREATE_TYPES
+    OBJECT_REQUIRED = True
+    ACTOR_REQUIRED = True
+
+
+class Ignore(Read):
+    ACTIVITY_TYPE = ActivityType.IGNORE
 
 
 class Delete(BaseActivity):
