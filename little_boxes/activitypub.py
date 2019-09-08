@@ -927,7 +927,7 @@ class Note(BaseActivity):
             "object": self.to_dict(embed=True),
             "actor": self.attributedTo,
         }
-        for field in ["published", "to", "bto", "cc", "bcc", "audience"]:
+        for field in ["published", "to", "bto", "cc", "bcc", "audience", "context"]:
             if field in self._data:
                 create_payload[field] = self._data[field]
 
