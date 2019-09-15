@@ -812,6 +812,13 @@ class Read(BaseActivity):
     OBJECT_REQUIRED = True
     ACTOR_REQUIRED = True
 
+    def _recipients(self) -> List[str]:
+        recipients = [self.get_object().get_actor().id]
+        for field in ["to", "cc"]:
+            if field in self._data:
+                recipients.extend(_to_list(self._data[field]))
+        return list(set(recipients))
+
 
 class Ignore(Read):
     ACTIVITY_TYPE = ActivityType.IGNORE
