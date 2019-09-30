@@ -128,6 +128,9 @@ class ActivityType(Enum):
     READ = "Read"
     IGNORE = "Ignore"
 
+    # Pleroma uses Listen for media scrobbling
+    LISTEN = "Listen"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -749,6 +752,20 @@ class Undo(BaseActivity):
                 if field in self._data:
                     recipients.extend(_to_list(self._data[field]))
             return list(set(recipients))
+
+
+class Listen(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.LISTEN
+    ALLOWED_OBJECT_TYPES = [ActivityType.AUDIO]
+    OBJECT_REQUIRED = True
+    ACTOR_REQUIRED = True
+
+    def _recipients(self) -> List[str]:
+        recipients = [self.get_object().get_actor().id]
+        for field in ["to", "cc"]:
+            if field in self._data:
+                recipients.extend(_to_list(self._data[field]))
+        return list(set(recipients))
 
 
 class Like(BaseActivity):
