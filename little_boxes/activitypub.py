@@ -131,6 +131,9 @@ class ActivityType(Enum):
     # Pleroma uses Listen for media scrobbling
     LISTEN = "Listen"
 
+    # Used by Honk (and microblog.pub)
+    PLACE = "Place"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -628,6 +631,12 @@ class Mention(BaseActivity):
     ACTOR_REQUIRED = False
 
 
+class Place(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.PLACE
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+
 class Hashtag(BaseActivity):
     ACTIVITY_TYPE = ActivityType.HASHTAG
     OBJECT_REQUIRED = False
@@ -982,6 +991,21 @@ class Note(BaseActivity):
                     logger.exception(f"invalid tag {tag!r}")
 
         return False
+
+    def get_places(self) -> List["Place"]:
+        if self.tag is None:
+            return []
+
+        places = []
+        for tag in self.tag:
+            # Some AP implemention return "type"less tag for links
+            if "type" not in tag:
+                continue
+
+            if _has_type(tag["type"], ActivityType.PLACE):
+                places.append(Place(**tag))
+
+        return places
 
     def get_mentions(self) -> List["Mention"]:
         if self.tag is None:
