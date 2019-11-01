@@ -134,6 +134,9 @@ class ActivityType(Enum):
     # Used by Honk (and microblog.pub)
     PLACE = "Place"
 
+    # Sometimes, URLs a are wrapped into a Link object
+    LINK = "Link"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -696,6 +699,15 @@ class Image(BaseActivity):
 
     def __repr__(self):
         return "Image({!r})".format(self._data.get("url"))
+
+
+class Link(BaseActivity):
+    ACTIVITY_TYPE = ActivityType.LINK
+    OBJECT_REQUIRED = False
+    ACTOR_REQUIRED = False
+
+    def __repr__(self):
+        return "Link({!r})".format(self._data.get("href"))
 
 
 class Emoji(BaseActivity):
