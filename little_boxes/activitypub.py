@@ -265,8 +265,8 @@ class BaseActivity(object, metaclass=_ActivityMeta):
     OBJECT_REQUIRED = False  # Whether the object field is required or note
     ALLOWED_OBJECT_TYPES: List[ActivityType] = []
     ACTOR_REQUIRED = (
-        True
-    )  # Most of the object requires an actor, so this flag in on by default
+        True  # Most of the object requires an actor, so this flag in on by default
+    )
 
     def __init__(self, **kwargs) -> None:  # noqa: C901
         if not self.ACTIVITY_TYPE:
