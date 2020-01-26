@@ -818,6 +818,7 @@ class Dislike(Like):
 class EmojiReaction(Like):
     ACTIVITY_TYPE = ActivityType.EMOJI_REACTION
 
+
 class Announce(BaseActivity):
     ACTIVITY_TYPE = ActivityType.ANNOUNCE
     ALLOWED_OBJECT_TYPES = CREATE_TYPES
