@@ -137,6 +137,8 @@ class ActivityType(Enum):
     # Sometimes, URLs a are wrapped into a Link object
     LINK = "Link"
 
+    EMOJI_REACTION = "EmojiReaction"
+
 
 ACTOR_TYPES = [
     ActivityType.PERSON,
@@ -812,6 +814,9 @@ class Like(BaseActivity):
 class Dislike(Like):
     ACTIVITY_TYPE = ActivityType.DISLIKE
 
+
+class EmojiReaction(Like):
+    ACTIVITY_TYPE = ActivityType.EMOJI_REACTION
 
 class Announce(BaseActivity):
     ACTIVITY_TYPE = ActivityType.ANNOUNCE
